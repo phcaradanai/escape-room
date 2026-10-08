@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room 25 Ultimate - Online Multiplayer (ห้องมรณะ 25)</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="scanline-overlay"></div>
+    <div id="danger-flash" class="danger-flash-overlay"></div>
+    <div id="victory-flash" class="victory-flash-overlay"></div>
+    <div id="splash-banner" class="splash-banner"></div>
+
+    <!-- Language & Sound Selector Floating Switcher -->
+    <div class="lang-switcher">
+        <button class="sound-toggle-btn" id="sound-btn" onclick="toggleAudio()" title="Toggle Sound">🔊</button>
+        <button class="lang-btn active" data-lang="th" onclick="setLanguage('th')">🇹🇭 ไทย</button>
+        <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">🇬🇧 EN</button>
+    </div>
+
+    <!-- ==================== MAIN MENU / ONLINE LOBBY ENTRY ==================== -->
+    <div id="screen-menu" class="screen active">
+        <div class="menu-bg">
+            <div class="grid-lines"></div>
+            <div class="floating-particles" id="particles"></div>
+        </div>
+        <div class="menu-content">
+            <div class="logo-container">
+                <div class="logo-glow"></div>
+                <h1 class="game-title">
+                    <span class="title-room" data-i18n="gameTitle">ROOM</span>
+                    <span class="title-25">25</span>
+                </h1>
+                <h2 class="game-subtitle" data-i18n="gameSubtitle">ห้องมรณะ 25 ออนไลน์</h2>
+                <div class="title-tagline" data-i18n="tagline">เขาวงกตห้องมรณะ เรียลไทม์มัลติเพลเยอร์</div>
+            </div>
+
+            <div class="online-login-box">
+                <div class="input-field-group">
+                    <label data-i18n="playerCodename">ชื่อผู้เล่น / โค้ดเนม</label>
+                    <input type="text" id="player-nickname" placeholder="เช่น ผู้เล่น 1" maxlength="16" value="ผู้เล่น 1">
+                </div>
+
+                <div class="menu-buttons">
+                    <button class="menu-btn primary" onclick="openCreateRoomModal()">
+                        <span class="btn-icon">⚡</span>
+                        <span class="btn-text" data-i18n="createRoom">สร้างห้องเกม</span>
+                    </button>
+                    <button class="menu-btn" onclick="openJoinRoomModal()">
+                        <span class="btn-icon">🔗</span>
+                        <span class="btn-text" data-i18n="joinRoom">เข้าร่วมห้อง</span>
+                    </button>
+                    <button class="menu-btn" onclick="showScreen('screen-rules')">
+                        <span class="btn-icon">📖</span>
+                        <span class="btn-text" data-i18n="rules">คู่มือการเล่น</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="menu-footer">
+                <span data-i18n="clientFooter">ระบบออนไลน์ข้ามเครื่อง · แยกหน้าจออิสระ · วางแผนลับเฉพาะคุณ</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== CREATE ROOM MODAL ==================== -->
+    <div id="modal-create-room" class="modal hidden">
+        <div class="modal-content setup-modal-content">
+            <h2 class="setup-title" data-i18n="hostTitle">ตั้งค่าสร้างห้องแข่งขันใหม่</h2>
+            <div class="setup-section">
+                <h3 data-i18n="gameMode">โหมดการเล่น</h3>
+                <div class="mode-selector">
+                    <button class="mode-btn active" data-mode="cooperative" onclick="selectModalMode(this)">
+                        <div class="mode-icon">🤝</div>
+                        <div class="mode-name" data-i18n="coopMode">ร่วมมือ (COOP)</div>
+                    </button>
+                    <button class="mode-btn" data-mode="suspicion" onclick="selectModalMode(this)">
+                        <div class="mode-icon">🕵️</div>
+                        <div class="mode-name" data-i18n="suspicionMode">จับคนทรยศ (SUSPICION)</div>
+                    </button>
+                    <button class="mode-btn" data-mode="competition" onclick="selectModalMode(this)">
+                        <div class="mode-icon">⚔️</div>
+                        <div class="mode-name" data-i18n="competitionMode">เอาชีวิตรอดเดี่ยว</div>
+                    </button>
+                </div>
+            </div>
+            <div class="setup-section">
+                <h3 data-i18n="roundsDifficulty">จำนวนรอบ (ความยาก)</h3>
+                <div class="difficulty-selector">
+                    <button class="diff-btn" data-diff="8" onclick="selectModalDiff(this)" data-i18n="easy">8 รอบ (ง่าย)</button>
+                    <button class="diff-btn active" data-diff="10" onclick="selectModalDiff(this)" data-i18n="normal">10 รอบ (ปกติ)</button>
+                    <button class="diff-btn" data-diff="7" onclick="selectModalDiff(this)" data-i18n="hard">7 รอบ (ยาก)</button>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="menu-btn" onclick="closeModals()" data-i18n="cancel">ยกเลิก</button>
+                <button class="menu-btn primary" onclick="submitCreateRoom()" data-i18n="create">ยืนยันสร้างห้อง</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== JOIN ROOM MODAL ==================== -->
+    <div id="modal-join-room" class="modal hidden">
+        <div class="modal-content">
+            <h3 data-i18n="joinTitle">ใส่รหัสห้อง 4 หลัก</h3>
+            <div class="input-field-group">
+                <input type="text" id="join-room-code" placeholder="ABCD" maxlength="4" style="text-transform: uppercase; text-align: center; font-size: 1.5rem; letter-spacing: 5px;">
+            </div>
+            <div class="modal-actions" style="margin-top: 15px;">
+                <button class="menu-btn" onclick="closeModals()" data-i18n="cancel">ยกเลิก</button>
+                <button class="menu-btn primary" onclick="submitJoinRoom()" data-i18n="joinBtn">เข้าห้อง</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== LOBBY WAITING ROOM ==================== -->
+    <div id="screen-lobby" class="screen">
+        <div class="setup-container">
+            <h2 class="setup-title" data-i18n="lobbyTitle">ห้องพักรอผู้เข้าแข่งขัน</h2>
+            <div class="lobby-code-banner">
+                <span data-i18n="roomCodeLabel">รหัสห้อง:</span>
+                <strong id="display-room-code">----</strong>
+                <button class="copy-code-btn" onclick="copyRoomLink()" data-i18n="copyInviteLink">📋 คัดลอกลิงก์ชวนเพื่อน</button>
+            </div>
+
+            <div class="setup-section">
+                <h3><span data-i18n="connectedPlayers">ผู้เล่นที่เชื่อมต่อ</span> (<span id="connected-count">1</span>/8)</h3>
+                <div id="lobby-player-list" class="lobby-player-grid"></div>
+            </div>
+
+            <div class="setup-section">
+                <h3 data-i18n="settings">การตั้งค่า</h3>
+                <div class="lobby-settings-display">
+                    <div><span data-i18n="gameMode">โหมด</span>: <span id="lobby-mode-label" style="color:var(--accent-blue)">COOPERATIVE</span></div>
+                    <div><span data-i18n="roundsDifficulty">จำนวนรอบ</span>: <span id="lobby-rounds-label" style="color:var(--accent-green)">10</span></div>
+                </div>
+            </div>
+
+            <div id="host-controls" class="lobby-footer-actions">
+                <button class="menu-btn primary start-btn" id="start-game-btn" onclick="requestStartGame()">
+                    <span class="btn-icon">⚡</span>
+                    <span class="btn-text" data-i18n="launchExp">เริ่มเกมเลย!</span>
+                </button>
+            </div>
+            <div id="guest-waiting-msg" class="guest-waiting-msg hidden" data-i18n="waitingHost">
+                กำลังรอหัวหน้าห้องเริ่มเกม...
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== ONLINE GAMEPLAY SCREEN ==================== -->
+    <div id="screen-game" class="screen">
+        <!-- Top HUD -->
+        <div class="game-hud-top">
+            <div class="hud-left">
+                <div class="round-display">
+                    <span class="hud-label" data-i18n="round">รอบที่</span>
+                    <span id="round-number" class="hud-value">1</span>
+                    <span class="hud-separator">/</span>
+                    <span id="max-rounds" class="hud-value-small">10</span>
+                </div>
+                <div class="phase-display">
+                    <span class="hud-label" data-i18n="phase">เฟส</span>
+                    <span id="phase-name" class="hud-value phase-text" data-i18n="programmingPhase">วางแผน</span>
+                </div>
+            </div>
+            <div class="hud-center">
+                <div id="game-message" class="game-message">เตรียมเข้าสู่เขาวงกต...</div>
+            </div>
+            <div class="hud-right">
+                <div class="my-role-badge" id="my-role-display">ROLE: PRISONER</div>
+                <button class="sound-toggle-btn in-hud" id="hud-sound-btn" onclick="toggleAudio()" title="Toggle Sound">🔊</button>
+                <div class="hud-lang-group">
+                    <button class="lang-btn hud-lang" data-lang="th" onclick="setLanguage('th')">TH</button>
+                    <button class="lang-btn hud-lang" data-lang="en" onclick="setLanguage('en')">EN</button>
+                </div>
+                <button class="hud-btn" onclick="toggleGameLog()" title="Log">📋</button>
+                <button class="hud-btn" onclick="showScreen('screen-rules')" title="Rules">📖</button>
+            </div>
+        </div>
+
+        <div class="game-main">
+            <!-- Left Panel - Players Status -->
+            <div class="game-panel-left">
+                <div class="panel-header" data-i18n="connectedPlayers">ผู้เล่นออนไลน์</div>
+                <div id="player-list" class="player-list"></div>
+            </div>
+
+            <!-- Center Board -->
+            <div class="game-board-container">
+                <div id="game-board" class="game-board"></div>
+            </div>
+
+            <!-- Right Panel - Action Center -->
+            <div class="game-panel-right">
+                <div class="panel-header" data-i18n="myControls">คำสั่งของคุณ</div>
+
+                <!-- Programming Interface -->
+                <div id="programming-panel" class="programming-panel">
+                    <div class="action-slots">
+                        <div class="action-slot" id="action-slot-1">
+                            <span class="slot-label" data-i18n="action1">แอ็กชัน 1</span>
+                            <span class="slot-value">—</span>
+                        </div>
+                        <div class="action-slot" id="action-slot-2">
+                            <span class="slot-label" data-i18n="action2">แอ็กชัน 2</span>
+                            <span class="slot-value">—</span>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="clientSelectAction('peek')">
+                            <span class="action-icon">👁</span>
+                            <span class="action-name" data-i18n="lookAction">แอบดู</span>
+                        </button>
+                        <button class="action-btn" onclick="clientSelectAction('move')">
+                            <span class="action-icon">🏃</span>
+                            <span class="action-name" data-i18n="moveAction">เดิน</span>
+                        </button>
+                        <button class="action-btn" onclick="clientSelectAction('push')">
+                            <span class="action-icon">👊</span>
+                            <span class="action-name" data-i18n="pushAction">ผลัก</span>
+                        </button>
+                        <button class="action-btn" onclick="clientSelectAction('control')">
+                            <span class="action-icon">⚙</span>
+                            <span class="action-name" data-i18n="controlAction">เลื่อนห้อง</span>
+                        </button>
+                    </div>
+
+                    <button class="confirm-btn" id="confirm-actions-btn" onclick="submitMyProgramming()" disabled data-i18n="lockInBtn">
+                        ล็อคคำสั่งลับทั้ง 2 อย่าง
+                    </button>
+                    <div id="lock-in-status" class="lock-in-status hidden" data-i18n="actionsLocked">
+                        ล็อคคำสั่งแล้ว! กำลังรอผู้เล่นอื่น...
+                    </div>
+                </div>
+
+                <!-- Resolution Interface -->
+                <div id="resolution-panel" class="resolution-panel hidden">
+                    <div class="current-action-display">
+                        <span class="res-label" data-i18n="resolvingAction">กำลังดำเนินการคำสั่ง</span>
+                        <span id="current-action-name" class="res-value">—</span>
+                    </div>
+
+                    <!-- Slide Controls -->
+                    <div id="slide-selector" class="slide-selector hidden">
+                        <div class="slide-label" data-i18n="selectShift">เลือกแถวที่ต้องการเลื่อน</div>
+                        <div class="slide-options">
+                            <div class="slide-group">
+                                <span data-i18n="rows">แถวนอน</span>
+                                <button class="slide-btn" onclick="clientChooseSlide('row', 0)">1</button>
+                                <button class="slide-btn" onclick="clientChooseSlide('row', 1)">2</button>
+                                <button class="slide-btn disabled" disabled title="ห้องตรงกลางไม่สามารถเลื่อนได้">3</button>
+                                <button class="slide-btn" onclick="clientChooseSlide('row', 3)">4</button>
+                                <button class="slide-btn" onclick="clientChooseSlide('row', 4)">5</button>
+                            </div>
+                            <div class="slide-group">
+                                <span data-i18n="cols">แถวตั้ง</span>
+                                <button class="slide-btn" onclick="clientChooseSlide('col', 0)">1</button>
+                                <button class="slide-btn" onclick="clientChooseSlide('col', 1)">2</button>
+                                <button class="slide-btn disabled" disabled title="ห้องตรงกลางไม่สามารถเลื่อนได้">3</button>
+                                <button class="slide-btn" onclick="clientChooseSlide('col', 3)">4</button>
+                                <button class="slide-btn" onclick="clientChooseSlide('col', 4)">5</button>
+                            </div>
+                        </div>
+
+                        <div id="slide-direction" class="slide-direction hidden">
+                            <span data-i18n="direction">ทิศทาง</span>
+                            <div class="slide-dir-btns">
+                                <button class="dir-btn" id="slide-dir-1" onclick="clientConfirmSlide(-1)">◀ ซ้าย / บน</button>
+                                <button class="dir-btn" id="slide-dir-2" onclick="clientConfirmSlide(1)">▶ ขวา / ล่าง</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Push Target Picker -->
+                    <div id="push-target-picker" class="target-selector hidden">
+                        <div class="target-label" data-i18n="selectPushTarget">เลือกคนที่ต้องการผลัก</div>
+                        <div id="push-target-list" class="target-buttons"></div>
+                    </div>
+
+                    <div id="action-prompt" class="action-prompt">กำลังรอรอบ...</div>
+                </div>
+
+                <!-- Room Detail Inspector -->
+                <div class="room-info-panel">
+                    <div class="panel-header" data-i18n="roomIntel">ข้อมูลห้อง</div>
+                    <div id="room-info" class="room-info">
+                        <p class="room-info-placeholder" data-i18n="hoverIntel">เลื่อนเมาส์/แตะดูห้องที่เปิดแล้วเพื่ออ่านข้อมูล</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Log overlay -->
+        <div id="game-log" class="game-log hidden">
+            <div class="log-header">
+                <span data-i18n="complexLogs">บันทึกเหตุการณ์</span>
+                <button onclick="toggleGameLog()">✕</button>
+            </div>
+            <div id="log-entries" class="log-entries"></div>
+        </div>
+
+        <!-- Game Over Modal -->
+        <div id="gameover-overlay" class="gameover-overlay hidden">
+            <div class="gameover-content">
+                <h1 id="gameover-title" data-i18n="gameOver">จบเกม</h1>
+                <p id="gameover-text"></p>
+                <div id="gameover-stats" class="gameover-stats"></div>
+                <button class="menu-btn primary" onclick="location.reload()" data-i18n="returnToLobby">กลับไปหน้าล็อบบี้</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== HOW TO PLAY SCREEN ==================== -->
+    <div id="screen-rules" class="screen">
+        <div class="rules-container">
+            <button class="back-btn" onclick="goBack()" data-i18n="back">← ย้อนกลับ</button>
+            <h2 class="rules-title" data-i18n="rulesTitle">กฎกติกาและวิธีเอาชีวิตรอด</h2>
+            <div class="rules-content">
+                <div class="rule-section">
+                    <h3 data-i18n="ruleSection1Title">ระบบแยกจอเล่นออนไลน์</h3>
+                    <p data-i18n="ruleSection1Desc">ผู้เล่นทุกคนเชื่อมต่อผ่านมือถือหรือคอมพิวเตอร์ของตัวเองด้วยรหัสห้อง คุณสามารถวางแผนและแอบดูห้องลับได้โดยที่เพื่อนไม่เห็นหน้าจอของคุณ!</p>
+                </div>
+                <div class="rule-section">
+                    <h3 data-i18n="ruleSection2Title">ลำดับการเล่นในแต่ละรอบ</h3>
+                    <p data-i18n="ruleSection2Desc">1. เฟสวางแผน: ทุกคนแอบเลือกคำสั่งลับ 2 แอ็กชันพร้อมกัน<br>2. เฟสดำเนินการ: ผลักกัน เดิน เลื่อนห้อง หรือแอบดูตามลำดับเทิร์น กับดักจะทำงานทันทีที่มีคนก้าวเข้าไป</p>
+                </div>
+                <div class="rule-section">
+                    <h3 data-i18n="ruleSection3Title">เงื่อนไขการชนะ</h3>
+                    <p data-i18n="ruleSection3Desc">ตามหา 'ห้อง 25 (Room 25)' ให้เจอ รวมตัวผู้รอดชีวิตในห้องนั้นเมื่อห้องอยู่ตรงขอบกระดาน แล้วใช้คำสั่ง 'เลื่อนห้อง (Control)' ดันห้อง 25 ออกสู่อิสรภาพ!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="sfx.js"></script>
+    <script src="online-game.js"></script>
+</body>
+</html>

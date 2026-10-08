@@ -1,0 +1,6 @@
+@echo off
+echo Starting Room 25 Server...
+start "Room 25 Server" node server.js
+timeout /t 2 /nobreak >nul
+echo Starting Cloudflare Tunnel...
+cloudflared.exe tunnel --url http://localhost:3000

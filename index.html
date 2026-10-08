@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room 25 Ultimate - Digital Edition</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Scanline overlay -->
+    <div class="scanline-overlay"></div>
+
+    <!-- ==================== MAIN MENU SCREEN ==================== -->
+    <div id="screen-menu" class="screen active">
+        <div class="menu-bg">
+            <div class="grid-lines"></div>
+            <div class="floating-particles" id="particles"></div>
+        </div>
+        <div class="menu-content">
+            <div class="logo-container">
+                <div class="logo-glow"></div>
+                <h1 class="game-title">
+                    <span class="title-room">ROOM</span>
+                    <span class="title-25">25</span>
+                </h1>
+                <h2 class="game-subtitle">ULTIMATE</h2>
+                <div class="title-tagline">ESCAPE OR DIE TRYING</div>
+            </div>
+            <div class="menu-buttons">
+                <button class="menu-btn primary" onclick="showScreen('screen-setup')">
+                    <span class="btn-icon">▶</span>
+                    <span class="btn-text">NEW GAME</span>
+                </button>
+                <button class="menu-btn" onclick="showScreen('screen-rules')">
+                    <span class="btn-icon">📖</span>
+                    <span class="btn-text">HOW TO PLAY</span>
+                </button>
+                <button class="menu-btn" onclick="showScreen('screen-credits')">
+                    <span class="btn-icon">★</span>
+                    <span class="btn-text">CREDITS</span>
+                </button>
+            </div>
+            <div class="menu-footer">
+                <span>DIGITAL EDITION</span> · <span>2-6 PLAYERS</span> · <span>LOCAL MULTIPLAYER</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== GAME SETUP SCREEN ==================== -->
+    <div id="screen-setup" class="screen">
+        <div class="setup-container">
+            <button class="back-btn" onclick="showScreen('screen-menu')">← BACK</button>
+            <h2 class="setup-title">GAME SETUP</h2>
+
+            <div class="setup-section">
+                <h3>GAME MODE</h3>
+                <div class="mode-selector">
+                    <button class="mode-btn active" data-mode="cooperative" onclick="selectMode(this)">
+                        <div class="mode-icon">🤝</div>
+                        <div class="mode-name">COOPERATIVE</div>
+                        <div class="mode-desc">All players work together to escape</div>
+                    </button>
+                    <button class="mode-btn" data-mode="suspicion" onclick="selectMode(this)">
+                        <div class="mode-icon">🕵️</div>
+                        <div class="mode-name">SUSPICION</div>
+                        <div class="mode-desc">Hidden traitors among the group</div>
+                    </button>
+                    <button class="mode-btn" data-mode="competition" onclick="selectMode(this)">
+                        <div class="mode-icon">⚔️</div>
+                        <div class="mode-name">COMPETITION</div>
+                        <div class="mode-desc">Every player for themselves</div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="setup-section">
+                <h3>NUMBER OF PLAYERS</h3>
+                <div class="player-count-selector">
+                    <button class="count-btn" onclick="setPlayerCount(2)">2</button>
+                    <button class="count-btn" onclick="setPlayerCount(3)">3</button>
+                    <button class="count-btn active" onclick="setPlayerCount(4)">4</button>
+                    <button class="count-btn" onclick="setPlayerCount(5)">5</button>
+                    <button class="count-btn" onclick="setPlayerCount(6)">6</button>
+                </div>
+            </div>
+
+            <div class="setup-section">
+                <h3>PLAYERS</h3>
+                <div id="player-inputs" class="player-inputs">
+                    <!-- Generated dynamically -->
+                </div>
+            </div>
+
+            <div class="setup-section">
+                <h3>DIFFICULTY</h3>
+                <div class="difficulty-selector">
+                    <button class="diff-btn" data-diff="8" onclick="selectDifficulty(this)">EASY (8 ROUNDS)</button>
+                    <button class="diff-btn active" data-diff="10" onclick="selectDifficulty(this)">NORMAL (10 ROUNDS)</button>
+                    <button class="diff-btn" data-diff="7" onclick="selectDifficulty(this)">HARD (7 ROUNDS)</button>
+                </div>
+            </div>
+
+            <button class="menu-btn primary start-btn" onclick="startGame()">
+                <span class="btn-icon">⚡</span>
+                <span class="btn-text">START GAME</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== GAME SCREEN ==================== -->
+    <div id="screen-game" class="screen">
+        <!-- Top HUD -->
+        <div class="game-hud-top">
+            <div class="hud-left">
+                <div class="round-display">
+                    <span class="hud-label">ROUND</span>
+                    <span id="round-number" class="hud-value">1</span>
+                    <span class="hud-separator">/</span>
+                    <span id="max-rounds" class="hud-value-small">10</span>
+                </div>
+                <div class="phase-display">
+                    <span class="hud-label">PHASE</span>
+                    <span id="phase-name" class="hud-value phase-text">PROGRAMMING</span>
+                </div>
+            </div>
+            <div class="hud-center">
+                <div id="game-message" class="game-message">Welcome to the Complex. Find Room 25 to escape!</div>
+            </div>
+            <div class="hud-right">
+                <button class="hud-btn" onclick="showScreen('screen-rules')" title="Rules">📖</button>
+                <button class="hud-btn" onclick="toggleGameLog()" title="Game Log">📋</button>
+                <button class="hud-btn" onclick="confirmQuit()" title="Quit">✕</button>
+            </div>
+        </div>
+
+        <!-- Main Game Area -->
+        <div class="game-main">
+            <!-- Left Panel - Player Info -->
+            <div class="game-panel-left">
+                <div class="panel-header">PRISONERS</div>
+                <div id="player-list" class="player-list">
+                    <!-- Generated dynamically -->
+                </div>
+            </div>
+
+            <!-- Center - Board -->
+            <div class="game-board-container">
+                <div id="game-board" class="game-board">
+                    <!-- 5x5 grid generated dynamically -->
+                </div>
+                <!-- Slide controls -->
+                <div id="slide-controls" class="slide-controls hidden">
+                    <!-- Row/Column slide buttons -->
+                </div>
+            </div>
+
+            <!-- Right Panel - Actions -->
+            <div class="game-panel-right">
+                <div class="panel-header">ACTIONS</div>
+                <div id="action-panel" class="action-panel">
+                    <!-- Programming phase actions -->
+                    <div id="programming-panel" class="programming-panel">
+                        <div class="action-slots">
+                            <div class="action-slot" id="action-slot-1">
+                                <span class="slot-label">ACTION 1</span>
+                                <span class="slot-value">—</span>
+                            </div>
+                            <div class="action-slot" id="action-slot-2">
+                                <span class="slot-label">ACTION 2</span>
+                                <span class="slot-value">—</span>
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="action-btn" data-action="peek" onclick="selectAction('peek')">
+                                <span class="action-icon">👁</span>
+                                <span class="action-name">LOOK</span>
+                            </button>
+                            <button class="action-btn" data-action="move" onclick="selectAction('move')">
+                                <span class="action-icon">🏃</span>
+                                <span class="action-name">MOVE</span>
+                            </button>
+                            <button class="action-btn" data-action="push" onclick="selectAction('push')">
+                                <span class="action-icon">👊</span>
+                                <span class="action-name">PUSH</span>
+                            </button>
+                            <button class="action-btn" data-action="control" onclick="selectAction('control')">
+                                <span class="action-icon">⚙</span>
+                                <span class="action-name">CONTROL</span>
+                            </button>
+                        </div>
+                        <button class="confirm-btn" id="confirm-actions-btn" onclick="confirmActions()" disabled>
+                            CONFIRM ACTIONS
+                        </button>
+                    </div>
+
+                    <!-- Resolution phase UI -->
+                    <div id="resolution-panel" class="resolution-panel hidden">
+                        <div class="current-action-display">
+                            <span class="res-label">CURRENT ACTION</span>
+                            <span id="current-action-name" class="res-value">—</span>
+                        </div>
+                        <div id="direction-selector" class="direction-selector hidden">
+                            <div class="dir-label">SELECT DIRECTION</div>
+                            <div class="dir-grid">
+                                <button class="dir-btn" onclick="selectDirection('up')">↑</button>
+                                <button class="dir-btn" onclick="selectDirection('left')">←</button>
+                                <button class="dir-btn center-dot">•</button>
+                                <button class="dir-btn" onclick="selectDirection('right')">→</button>
+                                <button class="dir-btn" onclick="selectDirection('down')">↓</button>
+                            </div>
+                        </div>
+                        <div id="target-selector" class="target-selector hidden">
+                            <div class="target-label">SELECT TARGET PLAYER</div>
+                            <div id="target-buttons" class="target-buttons">
+                                <!-- Generated dynamically -->
+                            </div>
+                        </div>
+                        <div id="slide-selector" class="slide-selector hidden">
+                            <div class="slide-label">SELECT ROW/COLUMN TO SLIDE</div>
+                            <div class="slide-options">
+                                <div class="slide-group">
+                                    <span>ROWS</span>
+                                    <button class="slide-btn" onclick="selectSlide('row', 0)">Row 1</button>
+                                    <button class="slide-btn" onclick="selectSlide('row', 1)">Row 2</button>
+                                    <button class="slide-btn disabled" disabled>Row 3</button>
+                                    <button class="slide-btn" onclick="selectSlide('row', 3)">Row 4</button>
+                                    <button class="slide-btn" onclick="selectSlide('row', 4)">Row 5</button>
+                                </div>
+                                <div class="slide-group">
+                                    <span>COLS</span>
+                                    <button class="slide-btn" onclick="selectSlide('col', 0)">Col 1</button>
+                                    <button class="slide-btn" onclick="selectSlide('col', 1)">Col 2</button>
+                                    <button class="slide-btn disabled" disabled>Col 3</button>
+                                    <button class="slide-btn" onclick="selectSlide('col', 3)">Col 4</button>
+                                    <button class="slide-btn" onclick="selectSlide('col', 4)">Col 5</button>
+                                </div>
+                            </div>
+                            <div id="slide-direction" class="slide-direction hidden">
+                                <span>SLIDE DIRECTION</span>
+                                <div class="slide-dir-btns">
+                                    <button class="dir-btn" id="slide-dir-1" onclick="confirmSlide(-1)">◄ / ▲</button>
+                                    <button class="dir-btn" id="slide-dir-2" onclick="confirmSlide(1)">► / ▼</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Room Info -->
+                <div class="room-info-panel">
+                    <div class="panel-header">ROOM INFO</div>
+                    <div id="room-info" class="room-info">
+                        <p class="room-info-placeholder">Hover over a room to see details</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Log Overlay -->
+        <div id="game-log" class="game-log hidden">
+            <div class="log-header">
+                <span>GAME LOG</span>
+                <button onclick="toggleGameLog()">✕</button>
+            </div>
+            <div id="log-entries" class="log-entries">
+            </div>
+        </div>
+
+        <!-- Turn Transition Overlay -->
+        <div id="turn-overlay" class="turn-overlay hidden">
+            <div class="turn-overlay-content">
+                <h2 id="turn-overlay-title"></h2>
+                <p id="turn-overlay-text"></p>
+                <button class="menu-btn primary" onclick="dismissOverlay()">CONTINUE</button>
+            </div>
+        </div>
+
+        <!-- Peek Modal -->
+        <div id="peek-modal" class="modal hidden">
+            <div class="modal-content peek-modal-content">
+                <h3>ROOM REVEALED</h3>
+                <div id="peek-room-display" class="peek-room-display"></div>
+                <p id="peek-room-desc"></p>
+                <button class="menu-btn" onclick="closePeekModal()">GOT IT</button>
+            </div>
+        </div>
+
+        <!-- Game Over Overlay -->
+        <div id="gameover-overlay" class="gameover-overlay hidden">
+            <div class="gameover-content">
+                <h1 id="gameover-title"></h1>
+                <p id="gameover-text"></p>
+                <div id="gameover-stats" class="gameover-stats"></div>
+                <button class="menu-btn primary" onclick="showScreen('screen-menu')">MAIN MENU</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== RULES SCREEN ==================== -->
+    <div id="screen-rules" class="screen">
+        <div class="rules-container">
+            <button class="back-btn" onclick="goBack()">← BACK</button>
+            <h2 class="rules-title">HOW TO PLAY</h2>
+            <div class="rules-content">
+                <div class="rule-section">
+                    <h3>📋 OVERVIEW</h3>
+                    <p>You are a prisoner trapped in a deadly complex of 25 rooms, broadcast on a lethal reality TV show. Your goal: <strong>find Room 25</strong> — the exit — and escape before time runs out!</p>
+                    <p>The complex is a 5×5 grid of rooms. Most rooms are face-down (unknown). Some are safe, some are deadly traps. You must explore, cooperate, and survive.</p>
+                </div>
+                <div class="rule-section">
+                    <h3>🎮 GAME PHASES</h3>
+                    <p>Each round has two phases:</p>
+                    <ol>
+                        <li><strong>PROGRAMMING:</strong> Each player secretly selects 2 actions.</li>
+                        <li><strong>RESOLUTION:</strong> Players take turns resolving their actions one at a time.</li>
+                    </ol>
+                </div>
+                <div class="rule-section">
+                    <h3>⚡ ACTIONS</h3>
+                    <div class="action-rules">
+                        <div class="action-rule">
+                            <span class="ar-icon">👁</span>
+                            <div>
+                                <strong>LOOK</strong>
+                                <p>Secretly peek at an adjacent face-down room. Only you see what's there!</p>
+                            </div>
+                        </div>
+                        <div class="action-rule">
+                            <span class="ar-icon">🏃</span>
+                            <div>
+                                <strong>MOVE</strong>
+                                <p>Move your character to an adjacent room (up/down/left/right). The room is revealed and its effect triggers.</p>
+                            </div>
+                        </div>
+                        <div class="action-rule">
+                            <span class="ar-icon">👊</span>
+                            <div>
+                                <strong>PUSH</strong>
+                                <p>Push another player in your room to an adjacent room. That room is revealed and its effect triggers on the pushed player.</p>
+                            </div>
+                        </div>
+                        <div class="action-rule">
+                            <span class="ar-icon">⚙</span>
+                            <div>
+                                <strong>CONTROL</strong>
+                                <p>Slide an entire row or column of rooms in any direction. Rooms and players shift together. The room that slides off reappears on the other side.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="rule-section">
+                    <h3>🏠 ROOM TYPES</h3>
+                    <div class="room-rules">
+                        <div class="room-rule safe">
+                            <strong>🟢 SAFE ROOMS</strong>
+                            <ul>
+                                <li><strong>Empty Room:</strong> Nothing happens. Safe to be in.</li>
+                                <li><strong>Vision Chamber:</strong> Peek at any hidden room on the board.</li>
+                                <li><strong>Moving Chamber:</strong> Swap this room with any hidden room.</li>
+                                <li><strong>Control Chamber:</strong> Perform a free Control action.</li>
+                            </ul>
+                        </div>
+                        <div class="room-rule warning">
+                            <strong>🟡 OBSTACLE ROOMS</strong>
+                            <ul>
+                                <li><strong>Vortex Room:</strong> Sends you back to the Central Room.</li>
+                                <li><strong>Freezer Room:</strong> You lose your next action.</li>
+                                <li><strong>Dark Room:</strong> Peek is disabled from this room.</li>
+                            </ul>
+                        </div>
+                        <div class="room-rule danger">
+                            <strong>🔴 DEADLY ROOMS</strong>
+                            <ul>
+                                <li><strong>Mortal Chamber:</strong> Instant death!</li>
+                                <li><strong>Trapped Chamber:</strong> You must leave by your next action or die.</li>
+                                <li><strong>Acid Bath:</strong> If 2+ players are here, one dies.</li>
+                                <li><strong>Flooded Room:</strong> If you end 2 consecutive turns here, you drown.</li>
+                            </ul>
+                        </div>
+                        <div class="room-rule exit">
+                            <strong>🔵 SPECIAL</strong>
+                            <ul>
+                                <li><strong>Central Room:</strong> Starting room. Safe zone, no pushing allowed.</li>
+                                <li><strong>Room 25:</strong> THE EXIT! Get all prisoners here, then use Control to slide it off the board to win!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="rule-section">
+                    <h3>🏆 WINNING</h3>
+                    <p><strong>Cooperative:</strong> All surviving prisoners must be in Room 25, then one player uses Control to slide it off the grid. Everyone escapes together!</p>
+                    <p><strong>Suspicion:</strong> Guards try to prevent escape. Prisoners must find Room 25 AND figure out who the guards are.</p>
+                    <p><strong>Competition:</strong> Only YOU need to be in Room 25 when it slides off. Push others into traps!</p>
+                </div>
+                <div class="rule-section">
+                    <h3>💀 LOSING</h3>
+                    <p>If the countdown reaches zero before you escape, all prisoners <strong>die</strong>. If all prisoners are eliminated, the game ends immediately.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== CREDITS SCREEN ==================== -->
+    <div id="screen-credits" class="screen">
+        <div class="credits-container">
+            <button class="back-btn" onclick="showScreen('screen-menu')">← BACK</button>
+            <h2 class="credits-title">CREDITS</h2>
+            <div class="credits-content">
+                <div class="credit-block">
+                    <h3>ORIGINAL BOARD GAME</h3>
+                    <p><strong>Room 25</strong> by François Rouzé</p>
+                    <p>Published by Matagot</p>
+                </div>
+                <div class="credit-block">
+                    <h3>DIGITAL ADAPTATION</h3>
+                    <p>Web implementation for local multiplayer fun</p>
+                    <p>This is a fan-made digital adaptation for personal/educational use.</p>
+                </div>
+                <div class="credit-block">
+                    <h3>DISCLAIMER</h3>
+                    <p>This digital version is an unofficial fan project. Room 25 and Room 25 Ultimate are trademarks of Matagot. Please support the original creators by purchasing the physical board game!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="sfx-click" preload="auto"></audio>
+    <audio id="sfx-reveal" preload="auto"></audio>
+    <audio id="sfx-death" preload="auto"></audio>
+    <audio id="sfx-slide" preload="auto"></audio>
+
+    <script src="game.js"></script>
+</body>
+</html>
