@@ -2,6 +2,10 @@
 
 เกมกระดานแนวไซไฟระทึกขวัญ **Room 25** ในรูปแบบเว็บดิจิทัล รองรับทั้งการเล่นแบบ **Online Multiplayer แบบเรียลไทม์** ผ่าน Socket.IO และโหมด **Offline Standalone (เล่นบนเครื่องเดียว)**
 
+เอกสารสำหรับพัฒนาต่อ:
+- [แผน UX/UI และ Visual](UX_VISUAL_PLAN.md) — ลำดับงาน UX-00 ถึง UX-07, ข้อกำหนดภาพ/การใช้งาน และเกณฑ์ตรวจรับทั้งสองโหมด
+- [Review และแผนแก้ระบบ](REVIEW_PLAN.md) — ปัญหากติกา ความปลอดภัย และ dependencies ที่ต้องผ่านก่อนส่งมอบ
+
 ---
 
 ## สารบัญ (Table of Contents)
@@ -29,7 +33,8 @@
 2. **โหมดเล่นคนเดียว / ออฟไลน์ (Offline Standalone Hotseat)**
    - ทำงานบนเบราว์เซอร์ 100% ผ่านไฟล์ `index.html` และ `game.js`
    - เล่นผลัดกันเดินในเครื่องเดียวกัน (Pass-and-play) ไม่ต้องต่ออินเทอร์เน็ต
-
+   - สร้างเสียงเอฟเฟกต์ด้วย Web Audio API; สถานะปิดเสียงบันทึกในเบราว์เซอร์เมื่อ storage ใช้งานได้
+   - โหมด Suspicion ซ่อนบทบาทระหว่างส่งต่อเครื่อง และเปิดเฉพาะหลังผู้เล่นปัจจุบันกด CONTINUE
 ---
 
 ## ข้อกำหนดเบื้องต้น (Prerequisites)
@@ -42,8 +47,12 @@
 npm install
 ```
 
----
+รันการทดสอบกติกาอัตโนมัติ (Automated Tests):
+```bash
+npm test
+```
 
+---
 ## วิธีรันแบบ Local (Local Execution)
 
 ### 1. รันเซิร์ฟเวอร์ออนไลน์ (Online Multiplayer)
@@ -143,7 +152,7 @@ start-tunnel.bat
 
 ### 4. โหมดการเล่น (Game Modes)
 - **โหมดร่วมมือ (Cooperative)**: ผู้เล่นทุกคนช่วยกันหา Room 25 เลื่อนไปที่ขอบกระดาน และหลบหนีออกไปพร้อมกันก่อนหมดรอบ
-- **โหมดสงสัย (Suspicion)**: มีผู้คุม (Guards) ปลอมตัวเข้ามาปะปนกับนักโทษ (Prisoners) ผู้คุมชนะถ้านักโทษตาย 2 คนหรือหนีไม่ทันเวลาก่อนจบรอบ
+- **โหมดสงสัย (Suspicion)**: มีผู้คุม (Guards) ปลอมตัวเข้ามาปะปนกับนักโทษ (Prisoners) ผู้คุมชนะหากกำจัดนักโทษทั้งหมด หรือขัดขวางไม่ให้นักโทษหนีได้ทันเวลาก่อนจบรอบ
 - **โหมดแข่งขัน (Competition)**: แข่งขันกันเอาชีวิตรอดและหาทางออกเป็นคนแรก
 
 ---
@@ -155,15 +164,21 @@ room25/
 ├── server.js              # เซิร์ฟเวอร์หลัก Node.js / Express / Socket.IO
 ├── start-tunnel.bat       # สคริปต์เปิดเซิร์ฟเวอร์ + Cloudflare Tunnel
 ├── cloudflared.exe        # ไบนารี Cloudflare Tunnel สำหรับ Windows
-├── package.json           # การตั้งค่า dependencies และ metadata
+├── package.json           # การตั้งค่า dependencies, scripts (npm test)
 ├── AGENTS.md              # แนวทางการพัฒนาและโครงสร้างโค้ดสำหรับ AI Agent
 ├── README.md              # เอกสารคู่มือการใช้งานและรายละเอียดระบบ
+├── RULES.md               # กติกาและข้อกำหนดอ้างอิงกลาง (Single Source of Truth)
+├── REVIEW_PLAN.md         # Findings และแผนแก้ระบบก่อนส่งมอบ
+├── UX_VISUAL_PLAN.md      # แผน UX/UI, Visual, Motion/Audio และเกณฑ์ตรวจรับ
+├── tests/                 # ชุดทดสอบกติกาอัตโนมัติ (node:test)
+│   └── rules.test.js      # ชุดทดสอบ TEST-01 ถึง TEST-07
 ├── index.html             # โหมดออฟไลน์ Standalone Hotseat
-├── game.js                # Game Engine โหมดออฟไลน์
-├── styles.css             # สไตล์ชีทโหมดออฟไลน์
-└── public/                # Static assets สำหรับโหมด Online Multiplayer
-    ├── index.html         # หน้าต่างเกมออนไลน์และล็อบบี้
-    ├── online-game.js     # โค้ด Client สำหรับคุยผ่าน Socket.IO และแสดงผล
-    ├── styles.css         # สไตล์ชีทโหมดออนไลน์
-    └── sfx.js             # ตัวสร้างเสียงสังเคราะห์ Web Audio API
+├── game.js                # Game Controller โหมดออฟไลน์
+└── public/                # Static assets and shared UI assets for both modes
+    ├── index.html         # Online lobby and game interface
+    ├── game-engine.js     # Shared isomorphic game engine
+    ├── game-art.js        # SVG room and character art
+    ├── online-game.js     # Online Socket.IO client
+    ├── styles.css         # Canonical stylesheet for online and offline
+    └── sfx.js             # Procedural Web Audio sound effects
 ```

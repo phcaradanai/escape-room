@@ -9,81 +9,67 @@ const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Colors for players
-const PLAYER_COLORS = [
-    '#00d4ff', '#ff3e8e', '#00ff88', '#ffd700', '#ff8c00', '#8b5cf6', '#a855f7', '#ec4899'
-];
+const engine = require('./public/game-engine.js');
+const {
+    PLAYER_COLORS,
+    ROOM_DECK,
+    shuffleArray,
+    isAdjacent,
+    buildBoard
+} = engine;
 
-const ROOM_DECK = [
-    'empty', 'empty', 'empty', 'empty', 'empty', 'empty',
-    'vision', 'vision',
-    'moving', 'moving',
-    'controlRoom', 'controlRoom',
-    'vortex', 'vortex',
-    'freezer', 'freezer',
-    'dark', 'dark',
-    'mortal', 'mortal',
-    'trapped', 'trapped',
-    'acid',
-    'flooded',
-    'twins', 'twins',
-    'illusion',
-    'room25'
-];
-
-function shuffleArray(array) {
-    const arr = [...array];
-    for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
+function executeSlide(room, type, index, direction) {
+    if (!room || !room.game) return;
+    const actor = room.game.players ? room.game.players[room.game.currentPlayerIndex] : null;
+    const escapeResult = engine.checkEscapeSlide(room.game, type, index, direction, actor);
+    engine.executeSlide(room.game, type, index, direction);
+    const dir = parseInt(direction);
+    addRoomLog(room, `Complex shifted: ${type} ${index + 1} shifted ${dir > 0 ? (type === 'row' ? 'right' : 'down') : (type === 'row' ? 'left' : 'up')}`, 'info');
+    if (escapeResult) {
+        room.game.escapeResult = escapeResult;
+        endGame(room, escapeResult.victory, escapeResult.message);
+    } else {
+        checkWinCondition(room);
     }
-    return arr;
 }
 
-function buildBoard() {
-    const board = [];
-    for (let r = 0; r < 5; r++) {
-        board[r] = [];
-        for (let c = 0; c < 5; c++) {
-            board[r][c] = null;
-        }
+function checkIllusionExit(room, fromRow, fromCol) {
+    const didShift = engine.checkIllusionExit(room.game, fromRow, fromCol);
+    if (didShift) {
+        addRoomLog(room, `✨ The Illusion Room vanished after occupants left and shifted with a hidden chamber!`, 'warning');
     }
-
-    board[2][2] = {
-        type: 'central',
-        revealed: true,
-        row: 2,
-        col: 2,
-    };
-
-    let deck = shuffleArray(ROOM_DECK).slice(0, 24);
-    if (!deck.includes('room25')) {
-        deck[deck.length - 1] = 'room25';
-        deck = shuffleArray(deck);
-    }
-
-    // Ensure Twins always appear as a pair if present
-    const twinsCount = deck.filter(t => t === 'twins').length;
-    if (twinsCount === 1) {
-        const emptyIdx = deck.findIndex(t => t === 'empty');
-        if (emptyIdx !== -1) deck[emptyIdx] = 'twins';
-    }
-    let deckIdx = 0;
-    for (let r = 0; r < 5; r++) {
-        for (let c = 0; c < 5; c++) {
-            if (r === 2 && c === 2) continue;
-            board[r][c] = {
-                type: deck[deckIdx],
-                revealed: false,
-                row: r,
-                col: c,
-            };
-            deckIdx++;
-        }
-    }
-    return board;
 }
 
+function checkWinCondition(room) {
+    const result = engine.checkWinCondition(room.game);
+    if (result && result.victory) {
+        endGame(room, true, result.message);
+    }
+}
+
+function getSanitizedGameState(room, forSocketId) {
+    return engine.getSanitizedGameState(room.game, room.code, room.hostId, forSocketId);
+}
+
+function sanitizePlayerName(name, fallback = 'Player') {
+    if (typeof name !== 'string') return fallback;
+    const trimmed = name.trim();
+    if (!trimmed) return fallback;
+    return trimmed.replace(/[\u0000-\u001F\u007F-\u009F]/g, '').slice(0, 16) || fallback;
+}
+
+function getPublicPlayers(players, hostId) {
+    if (!Array.isArray(players)) return [];
+    return players.map((p, idx) => ({
+        id: (typeof p.id === 'number') ? p.id : idx,
+        socketId: p.socketId,
+        name: p.name,
+        color: p.color,
+        ready: Boolean(p.ready),
+        connected: Boolean(p.connected),
+        isHost: Boolean(p.socketId === hostId)
+    }));
+}
 // In-memory rooms: roomCode -> roomState
 const rooms = new Map();
 
@@ -96,76 +82,9 @@ function generateRoomCode() {
     return rooms.has(code) ? generateRoomCode() : code;
 }
 
-function getSanitizedGameState(room, forSocketId) {
-    if (!room.game) return null;
-    const g = room.game;
-    const clientPlayer = g.players.find(p => p.socketId === forSocketId);
-
-    // Deep copy board to mask hidden rooms unless peeked by this player
-    const sanitizedBoard = g.board.map(row => row.map(cell => {
-        const isRevealed = cell.revealed;
-        const peekedByMe = clientPlayer && clientPlayer.peekedRooms && clientPlayer.peekedRooms.some(pr => pr.r === cell.row && (pr.c === cell.col || pr.col === cell.col));
-        if (isRevealed || peekedByMe) {
-            return {
-                type: cell.type,
-                revealed: isRevealed,
-                peekedByMe: !isRevealed && peekedByMe,
-                row: cell.row,
-                col: cell.col
-            };
-        }
-        return {
-            type: 'hidden',
-            revealed: false,
-            peekedByMe: false,
-            row: cell.row,
-            col: cell.col
-        };
-    }));
-
-    // Players list: hide secret roles if not player himself or in suspicion mode
-    const sanitizedPlayers = g.players.map(p => {
-        const isSelf = p.socketId === forSocketId;
-        const showRole = (g.mode !== 'suspicion') || isSelf || g.gameOver;
-        return {
-            id: p.id,
-            isSelf: isSelf,
-            name: p.name,
-            color: p.color,
-            role: showRole ? p.role : 'hidden',
-            alive: p.alive,
-            row: p.row,
-            col: p.col,
-            frozen: p.frozen,
-            trapped: p.trapped,
-            // Only reveal actions programmed if already acted or if it's self
-            actionsCount: p.actions.filter(Boolean).length,
-            actions: isSelf ? p.actions : (g.phase === 'resolution' ? p.actions : [null, null]),
-            hasActed: p.hasActed
-        };
-    });
-
-    return {
-        myPlayerId: g.players.find(p => p.socketId === forSocketId)?.id ?? null,
-        roomCode: room.code,
-        hostId: room.hostId,
-        mode: g.mode,
-        maxRounds: g.maxRounds,
-        currentRound: g.currentRound,
-        phase: g.phase, // 'programming' | 'resolution'
-        currentPlayerIndex: g.currentPlayerIndex,
-        currentActionIndex: g.currentActionIndex,
-        waitingForInput: g.waitingForInput,
-        pushTargetId: g.pushTargetId,
-        board: sanitizedBoard,
-        players: sanitizedPlayers,
-        logs: g.logs.slice(-40),
-        gameOver: g.gameOver,
-        gameResult: g.gameResult
-    };
-}
 
 function broadcastGameState(room) {
+    if (!room || !room.players || !Array.isArray(room.players)) return;
     room.players.forEach(p => {
         const state = getSanitizedGameState(room, p.socketId);
         io.to(p.socketId).emit('gameStateUpdate', state);
@@ -182,15 +101,12 @@ function addRoomLog(room, message, type = 'info') {
     });
 }
 
-function isAdjacent(r1, c1, r2, c2) {
-    return (Math.abs(r1 - r2) + Math.abs(c1 - c2)) === 1;
-}
 
 // Resolution logic
 function beginCurrentAction(room) {
+    if (!room || !room.game) return;
     const g = room.game;
     if (g.gameOver) return;
-
     const player = g.players[g.currentPlayerIndex];
     if (!player || !player.alive) {
         advanceToNextAction(room);
@@ -292,9 +208,9 @@ function beginCurrentAction(room) {
 }
 
 function advanceToNextAction(room) {
+    if (!room || !room.game) return;
     const g = room.game;
     if (g.gameOver) return;
-
     g.waitingForInput = null;
     g.pushTargetId = null;
 
@@ -358,6 +274,10 @@ function advanceToNextAction(room) {
         while (firstAlive < g.players.length && !g.players[firstAlive].alive) {
             firstAlive++;
         }
+        if (firstAlive >= g.players.length) {
+            endGame(room, false, 'All prisoners have been eliminated!');
+            return;
+        }
         g.currentPlayerIndex = firstAlive;
         addRoomLog(room, `Action 1 complete! Resolving Action 2...`, 'info');
         broadcastGameState(room);
@@ -369,13 +289,14 @@ function advanceToNextAction(room) {
 }
 
 function endRound(room) {
+    if (!room || !room.game) return;
     const g = room.game;
     if (g.gameOver) return;
-
     // Resolve trapped / flooded status
     g.players.forEach(p => {
         if (!p.alive) return;
-        if (curRoom.type === 'flooded') {
+        const curRoom = g.board[p.row][p.col];
+        if (curRoom && curRoom.type === 'flooded') {
             p.floodedRounds = (p.floodedRounds || 0) + 1;
             if (p.floodedRounds >= 2) {
                 p.alive = false;
@@ -402,8 +323,12 @@ function endRound(room) {
         return;
     }
 
-    if (g.currentRound >= g.maxRounds) {
-        endGame(room, false, 'Time ran out! The complex lockdown is permanent.');
+    const timeout = engine.getTimeLimitResult(
+        g,
+        'Time ran out! The complex lockdown is permanent.'
+    );
+    if (timeout) {
+        endGame(room, timeout.victory, timeout.message);
         return;
     }
 
@@ -425,9 +350,9 @@ function endRound(room) {
 }
 
 function triggerRoomEffect(room, player, targetRoom, isPushed = false) {
+    if (!room || !room.game || !player) return;
     const g = room.game;
-    if (!player.alive) return;
-
+    if (g.gameOver || !player.alive) return;
     switch (targetRoom.type) {
         case 'mortal':
             player.alive = false;
@@ -546,42 +471,9 @@ function triggerRoomEffect(room, player, targetRoom, isPushed = false) {
     }
 }
 
-function checkIllusionExit(room, fromRow, fromCol) {
-    const g = room.game;
-    const originRoom = g.board[fromRow][fromCol];
-    if (!originRoom || originRoom.type !== 'illusion') return;
-
-    // Check if any alive players remain in this illusion room
-    const remaining = g.players.filter(p => p.alive && p.row === fromRow && p.col === fromCol);
-    if (remaining.length > 0) return;
-
-    // Find all hidden rooms (not central, not room25)
-    const hiddenRooms = [];
-    for (let r = 0; r < 5; r++) {
-        for (let c = 0; c < 5; c++) {
-            const cell = g.board[r][c];
-            if (!cell.revealed && cell.type !== 'central' && cell.type !== 'room25') {
-                hiddenRooms.push({ r, c });
-            }
-        }
-    }
-
-    if (hiddenRooms.length > 0) {
-        const target = hiddenRooms[Math.floor(Math.random() * hiddenRooms.length)];
-        const targetRoom = g.board[target.r][target.c];
-
-        const tempType = targetRoom.type;
-        targetRoom.type = 'illusion';
-        targetRoom.revealed = false;
-
-        originRoom.type = tempType;
-        originRoom.revealed = false;
-
-        addRoomLog(room, `✨ The Illusion Room vanished after occupants left and shifted with a hidden chamber!`, 'warning');
-    }
-}
 
 function checkDeathWinLoss(room) {
+    if (!room || !room.game) return;
     const g = room.game;
     const aliveCount = g.players.filter(p => p.alive).length;
     if (aliveCount === 0) {
@@ -596,101 +488,8 @@ function checkDeathWinLoss(room) {
     }
 }
 
-function executeSlide(room, type, index, direction) {
-    const g = room.game;
-    const dir = parseInt(direction);
-    const board = g.board;
-
-    if (type === 'row') {
-        const row = board[index];
-        if (dir > 0) {
-            const last = row[4];
-            for (let c = 4; c > 0; c--) {
-                row[c] = row[c - 1];
-                row[c].col = c;
-            }
-            row[0] = last;
-            row[0].col = 0;
-        } else {
-            const first = row[0];
-            for (let c = 0; c < 4; c++) {
-                row[c] = row[c + 1];
-                row[c].col = c;
-            }
-            row[4] = first;
-            row[4].col = 4;
-        }
-        g.players.forEach(p => {
-            if (p.alive && p.row === index) {
-                p.col = (p.col + dir + 5) % 5;
-            }
-        });
-        for (let c = 0; c < 5; c++) row[c].row = index;
-    } else {
-        if (dir > 0) {
-            const last = board[4][index];
-            for (let r = 4; r > 0; r--) {
-                board[r][index] = board[r - 1][index];
-                board[r][index].row = r;
-            }
-            board[0][index] = last;
-            board[0][index].row = 0;
-        } else {
-            const first = board[0][index];
-            for (let r = 0; r < 4; r++) {
-                board[r][index] = board[r + 1][index];
-                board[r][index].row = r;
-            }
-            board[4][index] = first;
-            board[4][index].row = 4;
-        }
-        g.players.forEach(p => {
-            if (p.alive && p.col === index) {
-                p.row = (p.row + dir + 5) % 5;
-            }
-        });
-        for (let r = 0; r < 5; r++) board[r][index].col = index;
-    }
-
-    addRoomLog(room, `Complex shifted: ${type} ${index + 1} shifted ${dir > 0 ? (type === 'row' ? 'right' : 'down') : (type === 'row' ? 'left' : 'up')}`, 'info');
-
-    // Win check
-    checkWinCondition(room);
-}
-
-function checkWinCondition(room) {
-    const g = room.game;
-    let r25 = null;
-    for (let r = 0; r < 5; r++) {
-        for (let c = 0; c < 5; c++) {
-            if (g.board[r][c].type === 'room25') {
-                r25 = g.board[r][c];
-            }
-        }
-    }
-    if (!r25 || !r25.revealed) return;
-
-    const isEdge = (r25.row === 0 || r25.row === 4 || r25.col === 0 || r25.col === 4);
-    if (!isEdge) return;
-
-    const alive = g.players.filter(p => p.alive);
-    const onR25 = alive.filter(p => p.row === r25.row && p.col === r25.col);
-
-    if (g.mode === 'cooperative' || g.mode === 'suspicion') {
-        const prisoners = alive.filter(p => p.role !== 'guard');
-        const prisonersOnR25 = prisoners.filter(p => p.row === r25.row && p.col === r25.col);
-        if (prisoners.length > 0 && prisonersOnR25.length === prisoners.length) {
-            endGame(room, true, 'All surviving prisoners successfully escaped through Room 25!');
-        }
-    } else if (g.mode === 'competition') {
-        if (onR25.length > 0) {
-            const names = onR25.map(p => p.name).join(', ');
-            endGame(room, true, `${names} escaped through Room 25! Victory!`);
-        }
-    }
-}
-
 function endGame(room, victory, message) {
+    if (!room || !room.game) return;
     const g = room.game;
     g.gameOver = true;
     g.gameResult = {
@@ -707,19 +506,31 @@ function endGame(room, victory, message) {
 io.on('connection', (socket) => {
     let currentRoomCode = null;
 
-    socket.on('createRoom', ({ playerName, mode, difficulty }) => {
+    socket.on('createRoom', (payload) => {
+        if (!payload || typeof payload !== 'object') {
+            socket.emit('errorMsg', 'Invalid request payload');
+            return;
+        }
+        const { playerName, mode, difficulty } = payload;
+        const validatedMode = (mode === 'cooperative' || mode === 'suspicion' || mode === 'competition') ? mode : 'cooperative';
+        const parsedDiff = parseInt(difficulty, 10);
+        const validatedDifficulty = [6, 7, 8, 10].includes(parsedDiff) ? parsedDiff : 10;
+        const safeName = sanitizePlayerName(playerName, 'Player 1');
         const code = generateRoomCode();
+        const token = 'tok_' + Math.random().toString(36).slice(2, 10);
         const room = {
             code,
             hostId: socket.id,
-            mode: mode || 'cooperative',
-            difficulty: parseInt(difficulty) || 10,
+            mode: validatedMode,
+            difficulty: validatedDifficulty,
             players: [
                 {
                     socketId: socket.id,
-                    name: playerName.trim() || 'Player 1',
+                    sessionToken: token,
+                    name: safeName,
                     color: PLAYER_COLORS[0],
-                    ready: true
+                    ready: true,
+                    connected: true
                 }
             ],
             game: null
@@ -730,19 +541,79 @@ io.on('connection', (socket) => {
         socket.emit('roomJoined', {
             roomCode: code,
             isHost: true,
-            players: room.players,
+            sessionToken: token,
+            players: getPublicPlayers(room.players, room.hostId),
             mode: room.mode,
-            difficulty: room.difficulty
+            difficulty: room.difficulty,
+            inGame: false
         });
     });
 
-    socket.on('joinRoom', ({ playerName, roomCode }) => {
+    socket.on('joinRoom', (payload) => {
+        if (!payload || typeof payload !== 'object') {
+            socket.emit('errorMsg', 'Invalid request payload');
+            return;
+        }
+        const { playerName, roomCode, sessionToken } = payload;
+        if (typeof roomCode !== 'string') {
+            socket.emit('errorMsg', 'Invalid room code');
+            return;
+        }
         const code = roomCode.toUpperCase().trim();
+        if (!/^[A-Z0-9]{4}$/.test(code)) {
+            socket.emit('errorMsg', 'Room code must be 4 characters');
+            return;
+        }
         const room = rooms.get(code);
         if (!room) {
             socket.emit('errorMsg', 'Room not found!');
             return;
         }
+
+        // Reconnect Check: player reconnecting with existing session token
+        if (typeof sessionToken === 'string' && sessionToken.startsWith('tok_')) {
+            const existingPlayer = room.players.find(p => p.sessionToken === sessionToken);
+            if (existingPlayer) {
+                const wasHost = room.hostId === existingPlayer.socketId;
+                existingPlayer.socketId = socket.id;
+                existingPlayer.connected = true;
+                currentRoomCode = code;
+                socket.join(code);
+
+                const isHost = wasHost;
+                if (isHost) room.hostId = socket.id;
+
+                socket.emit('roomJoined', {
+                    roomCode: code,
+                    isHost: (room.hostId === socket.id),
+                    sessionToken: sessionToken,
+                    players: getPublicPlayers(room.players, room.hostId),
+                    mode: room.mode,
+                    difficulty: room.difficulty,
+                    inGame: Boolean(room.game)
+                });
+
+                io.to(code).emit('lobbyUpdate', {
+                    players: getPublicPlayers(room.players, room.hostId),
+                    hostId: room.hostId,
+                    mode: room.mode,
+                    difficulty: room.difficulty
+                });
+
+                if (room.game) {
+                    const gamePlayer = room.game.players.find(p => p.id === existingPlayer.id || p.name === existingPlayer.name);
+                    if (gamePlayer) {
+                        gamePlayer.socketId = socket.id;
+                        addRoomLog(room, `📶 ${existingPlayer.name} reconnected to the complex!`, 'info');
+                    }
+                    broadcastGameState(room);
+                }
+                return;
+            }
+            socket.emit('errorMsg', 'Session unavailable');
+            return;
+        }
+
         if (room.game) {
             socket.emit('errorMsg', 'Game already in progress!');
             return;
@@ -752,12 +623,16 @@ io.on('connection', (socket) => {
             return;
         }
 
+        const token = 'tok_' + Math.random().toString(36).slice(2, 10);
         const playerColor = PLAYER_COLORS[room.players.length % PLAYER_COLORS.length];
+        const safeName = sanitizePlayerName(playerName, `Player ${room.players.length + 1}`);
         const newPlayer = {
             socketId: socket.id,
-            name: playerName.trim() || `Player ${room.players.length + 1}`,
+            sessionToken: token,
+            name: safeName,
             color: playerColor,
-            ready: false
+            ready: false,
+            connected: true
         };
 
         room.players.push(newPlayer);
@@ -767,26 +642,56 @@ io.on('connection', (socket) => {
         socket.emit('roomJoined', {
             roomCode: code,
             isHost: false,
-            players: room.players,
+            sessionToken: token,
+            players: getPublicPlayers(room.players, room.hostId),
             mode: room.mode,
-            difficulty: room.difficulty
+            difficulty: room.difficulty,
+            inGame: false
         });
 
         io.to(code).emit('lobbyUpdate', {
-            players: room.players,
+            players: getPublicPlayers(room.players, room.hostId),
             hostId: room.hostId,
             mode: room.mode,
             difficulty: room.difficulty
         });
     });
 
-    socket.on('updateLobbySettings', ({ mode, difficulty }) => {
+    socket.on('rematchRoom', () => {
+        const room = rooms.get(currentRoomCode);
+        if (!room) return;
+        if (room.hostId !== socket.id) {
+            socket.emit('errorMsg', 'Only the room host can trigger a rematch');
+            return;
+        }
+        if (!room.game || !room.game.gameOver) {
+            socket.emit('errorMsg', 'Cannot rematch while game is in progress');
+            return;
+        }
+        room.game = null;
+        io.to(room.code).emit('rematchTriggered');
+        io.to(room.code).emit('lobbyUpdate', {
+            players: getPublicPlayers(room.players, room.hostId),
+            hostId: room.hostId,
+            mode: room.mode,
+            difficulty: room.difficulty
+        });
+    });
+
+    socket.on('updateLobbySettings', (payload) => {
+        if (!payload || typeof payload !== 'object') return;
         const room = rooms.get(currentRoomCode);
         if (!room || room.hostId !== socket.id) return;
-        if (mode) room.mode = mode;
-        if (difficulty) room.difficulty = parseInt(difficulty);
+        const { mode, difficulty } = payload;
+        if (mode === 'cooperative' || mode === 'suspicion' || mode === 'competition') {
+            room.mode = mode;
+        }
+        const parsedDiff = parseInt(difficulty, 10);
+        if ([6, 7, 8, 10].includes(parsedDiff)) {
+            room.difficulty = parsedDiff;
+        }
         io.to(room.code).emit('lobbyUpdate', {
-            players: room.players,
+            players: getPublicPlayers(room.players, room.hostId),
             hostId: room.hostId,
             mode: room.mode,
             difficulty: room.difficulty
@@ -795,12 +700,16 @@ io.on('connection', (socket) => {
 
     socket.on('startOnlineGame', () => {
         const room = rooms.get(currentRoomCode);
-        if (!room || room.hostId !== socket.id) return;
+        if (!room) return;
+        const isHost = (room.hostId === socket.id);
+        if (!isHost) {
+            socket.emit('errorMsg', 'Only the room host can start the game');
+            return;
+        }
         if (room.players.length < 1) {
             socket.emit('errorMsg', 'Need at least 1 player to test/play!');
             return;
         }
-
         // Initialize game
         const players = room.players.map((p, idx) => {
             let role = 'prisoner';
@@ -853,24 +762,47 @@ io.on('connection', (socket) => {
         addRoomLog(room, `Game started in ${room.mode.toUpperCase()} mode!`, 'info');
         addRoomLog(room, `Round 1 Programming Phase: Select your 2 hidden actions.`, 'info');
 
+        io.to(room.code).emit('gameStarted');
         broadcastGameState(room);
     });
 
-    socket.on('submitProgramming', ({ actions }) => {
+    socket.on('submitProgramming', (payload, acknowledge) => {
+        const respond = (accepted, reason = null) => {
+            if (typeof acknowledge === 'function') acknowledge({ accepted, reason });
+        };
+
+        if (!payload || typeof payload !== 'object' || !Array.isArray(payload.actions)) {
+            respond(false, 'invalidProgramming');
+            return;
+        }
         const room = rooms.get(currentRoomCode);
-        if (!room || !room.game || room.game.phase !== 'programming') return;
-
-        const player = room.game.players.find(p => p.socketId === socket.id);
-        if (!player || !player.alive) return;
-
-        const curTile = room.game.board[player.row][player.col];
-        if (curTile && curTile.type === 'central' && actions && actions.includes('push')) {
-            socket.emit('gameAlert', { type: 'danger', message: 'Cannot PUSH while in Central Room!' });
+        if (!room || !room.game || room.game.phase !== 'programming') {
+            respond(false, 'programmingPhaseEnded');
             return;
         }
 
-        player.actions = actions;
+        const player = room.game.players.find(p => p.socketId === socket.id);
+        if (!player || !player.alive) {
+            respond(false, 'playerUnavailable');
+            return;
+        }
+
+        const allowedActions = ['peek', 'move', 'push', 'control'];
+        const actions = payload.actions;
+        if (actions.length !== 2 || !actions.every(a => allowedActions.includes(a))) {
+            respond(false, 'invalidProgramming');
+            return;
+        }
+
+        const curTile = room.game.board[player.row][player.col];
+        if (curTile && curTile.type === 'central' && actions.includes('push')) {
+            respond(false, 'cannotPushCentral');
+            return;
+        }
+
+        player.actions = [actions[0], actions[1]];
         addRoomLog(room, `${player.name} locked in their actions.`, 'info');
+        respond(true);
 
         // Check if all alive players programmed
         const alivePlayers = room.game.players.filter(p => p.alive);
@@ -892,27 +824,42 @@ io.on('connection', (socket) => {
     });
 
     socket.on('playerActionInput', (data) => {
+        if (!data || typeof data !== 'object' || typeof data.type !== 'string') return;
         const room = rooms.get(currentRoomCode);
         if (!room || !room.game || room.game.phase !== 'resolution') return;
         const g = room.game;
         const player = g.players[g.currentPlayerIndex];
-        if (!player || player.socketId !== socket.id) return;
+        if (!player || !player.alive || player.socketId !== socket.id) return;
+        if (!g.waitingForInput) return;
+
+        const expectedInput = g.waitingForInput;
+        if (expectedInput.playerId !== undefined && expectedInput.playerId !== player.id) return;
 
         if (data.type === 'peek') {
+            if (expectedInput.type !== 'peek-tile') return;
             const { row, col } = data;
+            if (!Number.isInteger(row) || !Number.isInteger(col) || row < 0 || row > 4 || col < 0 || col > 4) return;
             if (!isAdjacent(player.row, player.col, row, col)) return;
             const targetTile = g.board[row][col];
+            if (!targetTile || targetTile.revealed) return;
+
+            // Atomically consume waitingForInput
+            g.waitingForInput = null;
             if (!player.peekedRooms) player.peekedRooms = [];
             player.peekedRooms.push({ r: row, c: col });
 
             addRoomLog(room, `${player.name} peeked at an adjacent room.`, 'info');
             player.hasActed[g.currentActionIndex] = true;
-            g.waitingForInput = null;
             broadcastGameState(room);
             setTimeout(() => advanceToNextAction(room), 1000);
         } else if (data.type === 'move') {
+            if (expectedInput.type !== 'move-tile') return;
             const { row, col } = data;
+            if (!Number.isInteger(row) || !Number.isInteger(col) || row < 0 || row > 4 || col < 0 || col > 4) return;
             if (!isAdjacent(player.row, player.col, row, col)) return;
+
+            // Atomically consume waitingForInput
+            g.waitingForInput = null;
             const originRow = player.row;
             const originCol = player.col;
             player.row = row;
@@ -920,7 +867,6 @@ io.on('connection', (socket) => {
             const roomCell = g.board[row][col];
             roomCell.revealed = true;
             player.hasActed[g.currentActionIndex] = true;
-            g.waitingForInput = null;
 
             addRoomLog(room, `${player.name} moved to (${row + 1}, ${col + 1}): ${roomCell.type.toUpperCase()}`, 'info');
             broadcastGameState(room);
@@ -929,8 +875,9 @@ io.on('connection', (socket) => {
                 triggerRoomEffect(room, player, roomCell);
             }, 800);
         } else if (data.type === 'pushSelectTarget') {
+            if (expectedInput.type !== 'push-target') return;
             const target = g.players.find(p => p.id === data.targetId);
-            if (!target || target.row !== player.row || target.col !== player.col) return;
+            if (!target || !target.alive || target.id === player.id || target.row !== player.row || target.col !== player.col) return;
             g.pushTargetId = target.id;
             g.waitingForInput = {
                 type: 'push-dir',
@@ -941,9 +888,16 @@ io.on('connection', (socket) => {
             };
             broadcastGameState(room);
         } else if (data.type === 'pushExecute') {
+            if (expectedInput.type !== 'push-dir') return;
             const target = g.players.find(p => p.id === g.pushTargetId);
             const { row, col } = data;
-            if (!target || !isAdjacent(player.row, player.col, row, col)) return;
+            if (!Number.isInteger(row) || !Number.isInteger(col) || row < 0 || row > 4 || col < 0 || col > 4) return;
+            if (!target || !target.alive || !isAdjacent(player.row, player.col, row, col)) return;
+
+            // Atomically consume waitingForInput
+            g.waitingForInput = null;
+            g.pushTargetId = null;
+
             const originRow = target.row;
             const originCol = target.col;
             target.row = row;
@@ -951,8 +905,6 @@ io.on('connection', (socket) => {
             const roomCell = g.board[row][col];
             roomCell.revealed = true;
             player.hasActed[g.currentActionIndex] = true;
-            g.waitingForInput = null;
-            g.pushTargetId = null;
 
             addRoomLog(room, `${player.name} PUSHED ${target.name} into (${row + 1}, ${col + 1})!`, 'warning');
             broadcastGameState(room);
@@ -961,82 +913,55 @@ io.on('connection', (socket) => {
                 triggerRoomEffect(room, target, roomCell, true);
             }, 800);
         } else if (data.type === 'slide') {
+            if (expectedInput.type !== 'slide') return;
             const { slideType, index, direction } = data;
-            if ((slideType === 'row' || slideType === 'col') && index === 2) {
+            if (slideType !== 'row' && slideType !== 'col') return;
+            const idx = parseInt(index, 10);
+            if (idx < 0 || idx > 4 || idx === 2) {
                 // Central row/column cannot be slid
                 return;
             }
-            player.hasActed[g.currentActionIndex] = true;
-            const wasBonus = g.waitingForInput && g.waitingForInput.bonus;
-            g.waitingForInput = null;
+            const dir = parseInt(direction, 10);
+            if (dir !== -1 && dir !== 1) return;
 
-            executeSlide(room, slideType, index, direction);
+            // Atomically consume waitingForInput
+            g.waitingForInput = null;
+            player.hasActed[g.currentActionIndex] = true;
+
+            executeSlide(room, slideType, idx, dir);
             broadcastGameState(room);
             setTimeout(() => {
-                if (wasBonus) {
-                    advanceToNextAction(room);
-                } else {
-                    advanceToNextAction(room);
-                }
+                advanceToNextAction(room);
             }, 800);
         } else if (data.type === 'visionPeek') {
+            if (expectedInput.type !== 'vision-tile') return;
             const { row, col } = data;
+            if (!Number.isInteger(row) || !Number.isInteger(col) || row < 0 || row > 4 || col < 0 || col > 4) return;
             const targetTile = g.board[row][col];
+            if (!targetTile || targetTile.revealed) return;
+
+            // Atomically consume waitingForInput
+            g.waitingForInput = null;
             if (!player.peekedRooms) player.peekedRooms = [];
             player.peekedRooms.push({ r: row, c: col, col: col });
 
             addRoomLog(room, `${player.name} used Vision Chamber to peek secretly at (${row + 1}, ${col + 1})!`, 'success');
-            g.waitingForInput = null;
             broadcastGameState(room);
             setTimeout(() => advanceToNextAction(room), 1000);
         } else if (data.type === 'movingSwap') {
+            if (expectedInput.type !== 'moving-tile') return;
             const { row, col } = data;
+            if (!Number.isInteger(row) || !Number.isInteger(col) || row < 0 || row > 4 || col < 0 || col > 4) return;
+            if (row === player.row && col === player.col) return;
             const targetRoom = g.board[row][col];
             if (!targetRoom || targetRoom.revealed) return;
 
-            const oldRow = player.row;
-            const oldCol = player.col;
-            const playerRoom = g.board[oldRow][oldCol];
-
-            // Swap room types and revealed state
-            const targetType = targetRoom.type;
-            const targetRevealed = targetRoom.revealed;
-
-            targetRoom.type = playerRoom.type;
-            targetRoom.revealed = playerRoom.revealed;
-
-            playerRoom.type = targetType;
-            playerRoom.revealed = targetRevealed;
-
-            // Update any peeked rooms tracking if players peeked at this room
-            g.players.forEach(p => {
-                if (p.peekedRooms) {
-                    p.peekedRooms.forEach(pr => {
-                        const rMatch = pr.r;
-                        const cMatch = (pr.c !== undefined) ? pr.c : pr.col;
-                        if (rMatch === row && cMatch === col) {
-                            pr.r = oldRow;
-                            if (pr.c !== undefined) pr.c = oldCol;
-                            if (pr.col !== undefined) pr.col = oldCol;
-                        } else if (rMatch === oldRow && cMatch === oldCol) {
-                            pr.r = row;
-                            if (pr.c !== undefined) pr.c = col;
-                            if (pr.col !== undefined) pr.col = col;
-                        }
-                    });
-                }
-            });
-
-            // ALL players who were in the Moving Chamber travel with it to the new position
-            g.players.forEach(p => {
-                if (p.alive && p.row === oldRow && p.col === oldCol) {
-                    p.row = row;
-                    p.col = col;
-                }
-            });
-
-            addRoomLog(room, `🔄 ${player.name} and occupants moved with the Moving Chamber to (${row + 1}, ${col + 1})!`, 'success');
+            // Atomically consume waitingForInput
             g.waitingForInput = null;
+            const ok = engine.executeMovingSwap(g, player, row, col);
+            if (ok) {
+                addRoomLog(room, `🔄 ${player.name} and occupants moved with the Moving Chamber to (${row + 1}, ${col + 1})!`, 'success');
+            }
             broadcastGameState(room);
             setTimeout(() => advanceToNextAction(room), 1000);
         }
@@ -1047,24 +972,33 @@ io.on('connection', (socket) => {
         const room = rooms.get(currentRoomCode);
         if (!room) return;
 
-        room.players = room.players.filter(p => p.socketId !== socket.id);
-        if (room.players.length === 0) {
-            rooms.delete(currentRoomCode);
+        const playerInRoom = room.players.find(p => p.socketId === socket.id);
+        if (playerInRoom) {
+            playerInRoom.connected = false;
+        }
+
+        const allDisconnected = room.players.every(p => !p.connected);
+        if (allDisconnected) {
+            setTimeout(() => {
+                const checkRoom = rooms.get(currentRoomCode);
+                if (checkRoom && checkRoom.players.every(p => !p.connected)) {
+                    rooms.delete(currentRoomCode);
+                }
+            }, 60000);
         } else {
             if (room.hostId === socket.id) {
-                room.hostId = room.players[0].socketId;
+                const nextConnected = room.players.find(p => p.connected);
+                if (nextConnected) room.hostId = nextConnected.socketId;
             }
             if (room.game) {
                 const gamePlayer = room.game.players.find(p => p.socketId === socket.id);
                 if (gamePlayer) {
-                    gamePlayer.alive = false;
-                    addRoomLog(room, `${gamePlayer.name} disconnected.`, 'danger');
-                    checkDeathWinLoss(room);
+                    addRoomLog(room, `⚠️ ${gamePlayer.name} temporarily disconnected. Waiting for reconnection...`, 'warning');
                 }
                 broadcastGameState(room);
             } else {
                 io.to(room.code).emit('lobbyUpdate', {
-                    players: room.players,
+                    players: getPublicPlayers(room.players, room.hostId),
                     hostId: room.hostId,
                     mode: room.mode,
                     difficulty: room.difficulty
@@ -1075,6 +1009,32 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Room 25 Online Server running at http://localhost:${PORT}`);
-});
+if (require.main === module || process.env.AUTO_START === 'true') {
+    server.listen(PORT, '0.0.0.0', () => {
+        console.log(`Room 25 Online Server running at http://localhost:${PORT}`);
+    });
+}
+
+module.exports = {
+    app,
+    server,
+    io,
+    rooms,
+    PLAYER_COLORS,
+    ROOM_DECK,
+    buildBoard,
+    getSanitizedGameState,
+    sanitizePlayerName,
+    getPublicPlayers,
+    advanceToNextAction,
+    endRound,
+    triggerRoomEffect,
+    checkIllusionExit,
+    executeSlide,
+    checkWinCondition,
+    checkDeathWinLoss,
+    endGame,
+    shuffleArray,
+    executeMovingSwap: engine.executeMovingSwap,
+    executeCharacterAbility: engine.executeCharacterAbility
+};

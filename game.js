@@ -53,23 +53,33 @@ const ACTIONS = {
     control: { name: 'CONTROL', icon: '⚙' },
 };
 
+function playSound(type) {
+    if (typeof sfx === 'undefined' || !sfx || sfx.muted) return;
+    try {
+        if (typeof sfx[type] === 'function') sfx[type]();
+    } catch (e) {}
+}
+
+function toggleAudio() {
+    if (typeof sfx === 'undefined') return;
+    setSoundMuted(!sfx.muted);
+}
+
 // ==================== GAME STATE ====================
 let gameState = {
     mode: 'cooperative',        // cooperative | suspicion | competition
-    maxRounds: 10,
+    maxRounds: 8,
     currentRound: 1,
     phase: 'programming',       // programming | resolution
     currentPlayerIndex: 0,
+    selectedActionSlot: 0,
     currentActionIndex: 0,      // 0 or 1 (which of the 2 actions)
     players: [],
     board: [],                  // 5x5 array of room objects
     logs: [],
-    previousScreen: 'screen-menu',
-    waitingForInput: null,      // tracks what input the resolution phase needs
-    selectedSlideType: null,
-    selectedSlideIndex: null,
     escapedPlayers: [],
     gameOver: false,
+    privateRoleVisible: false,
 };
 
 // ==================== INITIALIZATION ====================
@@ -91,16 +101,34 @@ function createParticles() {
 
 // Screen management
 function showScreen(id) {
+    const target = document.getElementById(id);
+    if (!target) return;
+
     if (id === 'screen-rules') {
-        // Remember where we came from
         const current = document.querySelector('.screen.active');
         if (current) gameState.previousScreen = current.id;
     }
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
 
-    if (id === 'screen-setup') {
-        updatePlayerInputs();
+    const current = document.querySelector('.screen.active');
+    const screenChanged = !current || current.id !== id;
+    if (screenChanged) {
+        document.querySelectorAll('.modal, .turn-overlay, .gameover-overlay').forEach(dialog => {
+            if (!dialog.classList.contains('hidden')) Room25UI.closeDialog(dialog, { restoreFocus: false });
+        });
+    }
+
+    document.querySelectorAll('.screen').forEach(screen => {
+        const isActive = screen === target;
+        screen.classList.toggle('active', isActive);
+        screen.setAttribute('aria-hidden', String(!isActive));
+    });
+
+    if (id === 'screen-setup') updatePlayerInputs();
+    if (screenChanged) {
+        const heading = [...target.querySelectorAll('h1, h2')].find(element => element.getClientRects().length > 0);
+        const focusTarget = heading || target;
+        if (!focusTarget.hasAttribute('tabindex')) focusTarget.tabIndex = -1;
+        focusTarget.focus({ preventScroll: true });
     }
 }
 
@@ -113,29 +141,36 @@ function goBack() {
 let setupConfig = {
     mode: 'cooperative',
     playerCount: 4,
-    maxRounds: 10,
+    maxRounds: 8,
     playerNames: [],
 };
 
 function selectMode(btn) {
-    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    document.querySelectorAll('.mode-btn').forEach(button => {
+        const selected = button === btn;
+        button.classList.toggle('active', selected);
+        button.setAttribute('aria-pressed', String(selected));
+    });
     setupConfig.mode = btn.dataset.mode;
 }
 
 function setPlayerCount(n) {
     setupConfig.playerCount = n;
-    document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.count-btn').forEach(b => {
-        if (parseInt(b.textContent) === n) b.classList.add('active');
+    document.querySelectorAll('.count-btn').forEach(button => {
+        const selected = parseInt(button.textContent, 10) === n;
+        button.classList.toggle('active', selected);
+        button.setAttribute('aria-pressed', String(selected));
     });
     updatePlayerInputs();
 }
 
 function selectDifficulty(btn) {
-    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    setupConfig.maxRounds = parseInt(btn.dataset.diff);
+    document.querySelectorAll('.diff-btn').forEach(button => {
+        const selected = button === btn;
+        button.classList.toggle('active', selected);
+        button.setAttribute('aria-pressed', String(selected));
+    });
+    setupConfig.maxRounds = parseInt(btn.dataset.diff, 10);
 }
 
 function updatePlayerInputs() {
@@ -145,8 +180,8 @@ function updatePlayerInputs() {
         const div = document.createElement('div');
         div.className = 'player-input-group';
         div.innerHTML = `
-            <div class="player-color-dot" style="background: ${PLAYER_COLORS[i]}"></div>
-            <input type="text" placeholder="Player ${i + 1}" value="${setupConfig.playerNames[i] || ''}"
+            <div class="player-color-dot" style="background: ${PLAYER_COLORS[i]}" aria-hidden="true"></div>
+            <input type="text" aria-label="Player ${i + 1} name" autocomplete="off" placeholder="Player ${i + 1}" value="${setupConfig.playerNames[i] || ''}"
                    onchange="setupConfig.playerNames[${i}] = this.value">
         `;
         container.appendChild(div);
@@ -193,13 +228,13 @@ function startGame() {
     // Build board
     const board = buildBoard();
 
-    // Initialize game state
     gameState = {
         mode: setupConfig.mode,
         maxRounds: setupConfig.maxRounds,
         currentRound: 1,
         phase: 'programming',
         currentPlayerIndex: 0,
+        selectedActionSlot: 0,
         currentActionIndex: 0,
         players: players,
         board: board,
@@ -210,6 +245,7 @@ function startGame() {
         selectedSlideIndex: null,
         escapedPlayers: [],
         gameOver: false,
+        privateRoleVisible: false,
     };
 
     addLog('Game started! Mode: ' + setupConfig.mode.toUpperCase(), 'info');
@@ -221,36 +257,22 @@ function startGame() {
 }
 
 function buildBoard() {
+    if (typeof Room25Engine !== 'undefined') {
+        return Room25Engine.buildBoard();
+    }
     const board = [];
-    // Create 5x5 empty grid
     for (let r = 0; r < 5; r++) {
         board[r] = [];
         for (let c = 0; c < 5; c++) {
             board[r][c] = null;
         }
     }
-
-    // Place central room at (2,2)
-    board[2][2] = {
-        type: 'central',
-        revealed: true,
-        row: 2,
-        col: 2,
-    };
-
-    // Shuffle deck and place rooms
-    let deck = [...ROOM_DECK];
-    shuffleArray(deck);
-    // We need exactly 24 rooms (5x5 - 1 central)
-    deck = deck.slice(0, 24);
-
-    // Make sure room25 is in the deck
+    board[2][2] = { type: 'central', revealed: true, row: 2, col: 2 };
+    let deck = shuffleArray(ROOM_DECK).slice(0, 24);
     if (!deck.includes('room25')) {
         deck[deck.length - 1] = 'room25';
-        shuffleArray(deck);
+        deck = shuffleArray(deck);
     }
-
-    // Ensure Twins always appear as a pair if present
     const twinsCount = deck.filter(t => t === 'twins').length;
     if (twinsCount === 1) {
         const emptyIdx = deck.findIndex(t => t === 'empty');
@@ -259,7 +281,7 @@ function buildBoard() {
     let deckIdx = 0;
     for (let r = 0; r < 5; r++) {
         for (let c = 0; c < 5; c++) {
-            if (r === 2 && c === 2) continue; // Skip central
+            if (r === 2 && c === 2) continue;
             board[r][c] = {
                 type: deck[deckIdx],
                 revealed: false,
@@ -269,7 +291,6 @@ function buildBoard() {
             deckIdx++;
         }
     }
-
     return board;
 }
 
@@ -284,6 +305,48 @@ function renderGame() {
 
 function renderBoard() {
     const boardEl = document.getElementById('game-board');
+    const activeTile = boardEl.contains(document.activeElement)
+        ? document.activeElement.closest('.room-tile')
+        : null;
+    const activeRow = activeTile ? Number(activeTile.dataset.row) : null;
+    const activeCol = activeTile ? Number(activeTile.dataset.col) : null;
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+    const focusRow = activeRow ?? (currentPlayer ? currentPlayer.row : 2);
+    const focusCol = activeCol ?? (currentPlayer ? currentPlayer.col : 2);
+
+    boardEl.setAttribute('role', 'group');
+    boardEl.setAttribute('aria-label', 'Room board, 5 rows by 5 columns');
+    if (!boardEl.dataset.keyboardNavigation) {
+        boardEl.addEventListener('keydown', event => {
+            const tile = event.target.closest('.room-tile');
+            if (!tile) return;
+
+            const row = Number(tile.dataset.row);
+            const col = Number(tile.dataset.col);
+            const offsets = {
+                ArrowUp: [-1, 0],
+                ArrowDown: [1, 0],
+                ArrowLeft: [0, -1],
+                ArrowRight: [0, 1],
+            };
+
+            if (offsets[event.key]) {
+                const [rowOffset, colOffset] = offsets[event.key];
+                const next = boardEl.querySelector(
+                    `.room-tile[data-row="${row + rowOffset}"][data-col="${col + colOffset}"]`
+                );
+                if (next) {
+                    event.preventDefault();
+                    next.focus();
+                }
+            } else if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                tile.click();
+            }
+        });
+        boardEl.dataset.keyboardNavigation = 'true';
+    }
+
     boardEl.innerHTML = '';
 
     for (let r = 0; r < 5; r++) {
@@ -293,48 +356,90 @@ function renderBoard() {
             tile.className = 'room-tile';
             tile.dataset.row = r;
             tile.dataset.col = c;
+            tile.setAttribute('role', 'button');
+            tile.tabIndex = (r === focusRow && c === focusCol) ? 0 : -1;
+
+            const svgArt = (typeof Room25Art !== 'undefined') ? Room25Art.getRoomSvg(room.type) : '';
+            const hiddenSvgArt = (typeof Room25Art !== 'undefined') ? Room25Art.getRoomSvg('hidden') : '';
 
             if (room.revealed) {
                 tile.classList.add('revealed');
-                const info = ROOM_TYPES[room.type];
+                const info = ROOM_TYPES[room.type] || { category: 'safe', name: room.type };
                 tile.classList.add('room-' + info.category);
                 tile.innerHTML = `
+                    <div class="room-art-bg" aria-hidden="true">${svgArt}</div>
                     <div class="room-content">
-                        <div class="room-icon">${info.icon}</div>
                         <div class="room-name">${info.name.toUpperCase()}</div>
                     </div>
                 `;
             } else {
                 tile.classList.add('face-down');
+                tile.innerHTML = `
+                    <div class="room-art-bg" aria-hidden="true">${hiddenSvgArt}</div>
+                `;
             }
 
-            // Add player tokens
             const playersHere = gameState.players.filter(p => p.alive && p.row === r && p.col === c);
+            const roomName = room.revealed
+                ? (ROOM_TYPES[room.type] || { name: room.type }).name
+                : 'Unexplored room';
+            const occupants = playersHere.length ? `; ${playersHere.map(p => p.name).join(', ')}` : '';
+            tile.setAttribute('aria-label', `${roomName}, row ${r + 1}, column ${c + 1}${occupants}`);
+
             if (playersHere.length > 0) {
+                const isCrowded = playersHere.length > 4;
+                const currentPlayer = isCrowded
+                    ? playersHere.find(p => p.id === gameState.currentPlayerIndex)
+                    : null;
+                const visiblePlayers = isCrowded
+                    ? [currentPlayer, ...playersHere.filter(p => p !== currentPlayer)].filter(Boolean).slice(0, 3)
+                    : playersHere;
                 const tokensDiv = document.createElement('div');
-                tokensDiv.className = 'player-tokens';
-                playersHere.forEach(p => {
+                tokensDiv.className = isCrowded ? 'player-tokens player-tokens-crowded' : 'player-tokens';
+                tokensDiv.setAttribute('aria-hidden', 'true');
+                visiblePlayers.forEach(p => {
                     const token = document.createElement('div');
                     token.className = 'player-token';
                     if (p.id === gameState.currentPlayerIndex && gameState.phase === 'resolution') {
                         token.classList.add('active-token');
                     }
-                    token.style.background = p.color;
-                    token.textContent = p.name[0];
+                    token.style.setProperty('--token-color', p.color);
+                    const charIndex = p.id % (typeof Room25Art !== 'undefined' ? Room25Art.CHARACTERS.length : 6);
+                    const charData = (typeof Room25Art !== 'undefined') ? Room25Art.CHARACTERS[charIndex] : null;
+                    if (charData && charData.avatarSvg) {
+                        const wrap = document.createElement('div');
+                        wrap.className = 'token-svg-wrap';
+                        wrap.innerHTML = charData.avatarSvg;
+                        token.appendChild(wrap);
+                    } else {
+                        token.style.background = p.color;
+                        token.textContent = p.name[0];
+                    }
                     token.title = p.name;
                     tokensDiv.appendChild(token);
                 });
+                if (isCrowded) {
+                    const overflow = document.createElement('span');
+                    overflow.className = 'player-token-overflow';
+                    overflow.textContent = `+${playersHere.length - visiblePlayers.length}`;
+                    overflow.setAttribute('aria-hidden', 'true');
+                    tokensDiv.appendChild(overflow);
+                }
                 tile.appendChild(tokensDiv);
             }
 
-            // Event listeners
             tile.addEventListener('click', () => onTileClick(r, c));
             tile.addEventListener('mouseenter', () => onTileHover(r, c));
             tile.addEventListener('mouseleave', () => clearRoomInfo());
-
+            tile.addEventListener('focus', () => onTileHover(r, c));
+            tile.addEventListener('blur', () => clearRoomInfo());
             boardEl.appendChild(tile);
+            if (activeTile && r === activeRow && c === activeCol) {
+                tile.focus({ preventScroll: true });
+            }
         }
     }
+    renderWaitingInputHighlights();
 }
 
 function renderPlayerList() {
@@ -344,6 +449,7 @@ function renderPlayerList() {
     gameState.players.forEach((p, idx) => {
         const card = document.createElement('div');
         card.className = 'player-card';
+        card.setAttribute('role', 'listitem');
         card.style.borderLeftColor = p.color;
 
         if (idx === gameState.currentPlayerIndex && gameState.phase !== 'programming') {
@@ -359,9 +465,30 @@ function renderPlayerList() {
 
         let roleHtml = '';
         if (gameState.mode === 'suspicion') {
-            // Only show role to the player themselves (in a real game you'd hide this)
-            // For local multiplayer, we show it subtly
-            roleHtml = `<div class="pc-role ${p.role}">${p.role.toUpperCase()}</div>`;
+            if (gameState.gameOver || !p.alive) {
+                roleHtml = `<div class="pc-role ${p.role}">${p.role.toUpperCase()}</div>`;
+            } else if (
+                idx === gameState.currentPlayerIndex &&
+                gameState.phase === 'programming'
+            ) {
+                const isRoleVisible = gameState.privateRoleVisible;
+                const roleText = isRoleVisible
+                    ? `<span class="pc-role ${p.role} private-role">YOUR ROLE: ${p.role.toUpperCase()}</span>`
+                    : '';
+                const buttonText = isRoleVisible ? 'HIDE' : 'SHOW';
+                const buttonLabel = isRoleVisible ? 'Hide your role' : 'Show your role';
+                roleHtml = `
+                    <div class="private-role-control">
+                        ${roleText}
+                        <button type="button"
+                            class="private-role-toggle"
+                            aria-label="${buttonLabel}"
+                            aria-pressed="${isRoleVisible}">${buttonText}</button>
+                    </div>
+                `;
+            } else {
+                roleHtml = '<div class="pc-role hidden">ROLE: HIDDEN</div>';
+            }
         }
 
         let actionsHtml = '';
@@ -369,8 +496,13 @@ function renderPlayerList() {
             actionsHtml = '<div class="pc-actions">';
             for (let a = 0; a < 2; a++) {
                 if (p.actions[a]) {
-                    const cls = p.hasActed[a] ? 'pc-action-token resolved' : 'pc-action-token';
-                    actionsHtml += `<span class="${cls}">${ACTIONS[p.actions[a]].name}</span>`;
+                    const isRevealed = p.hasActed[a] || (idx === gameState.currentPlayerIndex && a === gameState.currentActionIndex && gameState.phase === 'resolution');
+                    if (isRevealed) {
+                        const cls = p.hasActed[a] ? 'pc-action-token resolved' : 'pc-action-token';
+                        actionsHtml += `<span class="${cls}">${ACTIONS[p.actions[a]].name}</span>`;
+                    } else if (gameState.phase === 'resolution') {
+                        actionsHtml += `<span class="pc-action-token hidden">?</span>`;
+                    }
                 }
             }
             actionsHtml += '</div>';
@@ -382,8 +514,27 @@ function renderPlayerList() {
             ${roleHtml}
             ${actionsHtml}
         `;
+        const roleToggle = card.querySelector('.private-role-toggle');
+        if (roleToggle) {
+            roleToggle.addEventListener('click', togglePrivateRoleVisibility);
+        }
         list.appendChild(card);
     });
+}
+
+function togglePrivateRoleVisibility() {
+    if (
+        gameState.mode !== 'suspicion' ||
+        gameState.phase !== 'programming' ||
+        gameState.gameOver ||
+        !gameState.players[gameState.currentPlayerIndex]?.alive
+    ) {
+        return;
+    }
+
+    gameState.privateRoleVisible = !gameState.privateRoleVisible;
+    renderPlayerList();
+    document.querySelector('#player-list .private-role-toggle')?.focus({ preventScroll: true });
 }
 
 function renderActionPanel() {
@@ -408,13 +559,20 @@ function renderProgrammingPanel() {
     for (let i = 0; i < 2; i++) {
         const slot = document.getElementById(`action-slot-${i + 1}`);
         const val = slot.querySelector('.slot-value');
-        if (player.actions[i]) {
+        const selected = gameState.selectedActionSlot === i;
+        const hasAction = Boolean(player.actions[i]);
+        const clearButton = slot.closest('.action-slot-group').querySelector('.slot-clear');
+        slot.classList.toggle('selected', selected);
+        slot.setAttribute('aria-pressed', String(selected));
+        if (hasAction) {
             val.textContent = ACTIONS[player.actions[i]].name;
             slot.classList.add('filled');
         } else {
             val.textContent = '—';
             slot.classList.remove('filled');
         }
+        clearButton.classList.toggle('hidden', !hasAction);
+        clearButton.disabled = !hasAction;
     }
 
     // Update confirm button
@@ -523,6 +681,7 @@ function updateHUD() {
 function onTileHover(row, col) {
     const room = gameState.board[row][col];
     const infoDiv = document.getElementById('room-info');
+    const playersHere = gameState.players.filter(p => p.alive && p.row === row && p.col === col);
 
     if (!room.revealed) {
         infoDiv.innerHTML = `
@@ -530,6 +689,7 @@ function onTileHover(row, col) {
             <div class="ri-type">FACE DOWN</div>
             <div class="ri-desc">This room hasn't been explored yet. Use LOOK to peek at it first!</div>
         `;
+        appendRoomOccupants(infoDiv, playersHere);
         return;
     }
 
@@ -541,60 +701,117 @@ function onTileHover(row, col) {
         exit: 'var(--room-exit)',
         central: 'var(--room-central)',
     };
-
-    const playersHere = gameState.players.filter(p => p.alive && p.row === row && p.col === col);
-    let playersText = '';
-    if (playersHere.length > 0) {
-        playersText = `<div style="margin-top:6px;font-size:0.75rem;color:var(--text-dim)">
-            Players: ${playersHere.map(p => `<span style="color:${p.color}">${p.name}</span>`).join(', ')}
-        </div>`;
-    }
-
     infoDiv.innerHTML = `
         <div class="ri-name" style="color: ${categoryColors[info.category]}">${info.icon} ${info.name}</div>
         <div class="ri-type">${info.category.toUpperCase()}</div>
         <div class="ri-desc">${info.desc}</div>
-        ${playersText}
     `;
+    appendRoomOccupants(infoDiv, playersHere);
+}
+
+function appendRoomOccupants(infoDiv, playersHere) {
+    if (!playersHere.length) return;
+
+    const section = document.createElement('div');
+    section.className = 'room-info-occupants';
+    if (playersHere.length > 4) {
+        const button = document.createElement('button');
+        const list = document.createElement('ul');
+        button.type = 'button';
+        button.className = 'room-occupants-toggle';
+        button.textContent = `View ${playersHere.length} players`;
+        button.setAttribute('aria-expanded', 'false');
+        button.setAttribute('aria-controls', 'room-occupant-list');
+        list.id = 'room-occupant-list';
+        list.className = 'room-occupant-list';
+        list.hidden = true;
+        playersHere.forEach(player => {
+            const item = document.createElement('li');
+            item.textContent = player.name;
+            list.appendChild(item);
+        });
+        button.addEventListener('click', () => {
+            const expanded = button.getAttribute('aria-expanded') === 'true';
+            button.setAttribute('aria-expanded', String(!expanded));
+            list.hidden = expanded;
+        });
+        section.append(button, list);
+    } else {
+        const summary = document.createElement('p');
+        summary.className = 'room-occupants-summary';
+        summary.textContent = `Players: ${playersHere.map(player => player.name).join(', ')}`;
+        section.appendChild(summary);
+    }
+    infoDiv.appendChild(section);
 }
 
 function clearRoomInfo() {
-    document.getElementById('room-info').innerHTML =
-        '<p class="room-info-placeholder">Hover over a room to see details</p>';
+    const infoDiv = document.getElementById('room-info');
+    setTimeout(() => {
+        if (infoDiv.matches(':hover, :focus-within') || document.querySelector('.room-tile:hover, .room-tile:focus')) {
+            return;
+        }
+        infoDiv.innerHTML = '<p class="room-info-placeholder">Hover over a room to see details</p>';
+    }, 400);
 }
 
 // ==================== PROGRAMMING PHASE ====================
 
-function selectAction(action) {
+function selectActionSlot(index) {
     const player = gameState.players[gameState.currentPlayerIndex];
-    const curTile = (player && gameState.board) ? gameState.board[player.row][player.col] : null;
-    if (action === 'push' && curTile && curTile.type === 'central') {
-        addLog(`${player.name} cannot PUSH in Central Room (Safe Zone)!`, 'warning');
-        setMessage(`Cannot PUSH in Central Room (Safe Zone)!`);
-        return;
-    }
-    if (action === 'peek' && curTile && curTile.type === 'dark') {
-        addLog(`${player.name} cannot LOOK while inside Dark Room!`, 'warning');
-        setMessage(`Cannot LOOK while inside Dark Room!`);
-        return;
-    }
-
-    if (!player.actions[0]) {
-        player.actions[0] = action;
-    } else if (!player.actions[1]) {
-        player.actions[1] = action;
-    } else {
-        // Replace second action
-        player.actions[1] = action;
-    }
-
+    if (gameState.phase !== 'programming' || !player) return;
+    gameState.selectedActionSlot = index;
+    playSound('click');
     renderProgrammingPanel();
 }
 
+function clearActionSlot(index) {
+    const player = gameState.players[gameState.currentPlayerIndex];
+    if (gameState.phase !== 'programming' || !player || !player.actions[index]) return;
+    player.actions[index] = null;
+    gameState.selectedActionSlot = index;
+    playSound('click');
+    renderProgrammingPanel();
+    document.getElementById(`action-slot-${index + 1}`).focus({ preventScroll: true });
+}
+
+function selectAction(action) {
+    const player = gameState.players[gameState.currentPlayerIndex];
+    const curTile = (player && gameState.board) ? gameState.board[player.row][player.col] : null;
+    if (!player || gameState.phase !== 'programming') return;
+    if (action === 'push' && curTile && curTile.type === 'central') {
+        playSound('error');
+        addLog(`${player.name} cannot PUSH in Central Room (Safe Zone)!`, 'warning');
+        setMessage('Cannot PUSH in Central Room (Safe Zone)!');
+        return;
+    }
+    if (action === 'peek' && curTile && curTile.type === 'dark') {
+        playSound('error');
+        addLog(`${player.name} cannot LOOK while inside Dark Room!`, 'warning');
+        setMessage('Cannot LOOK while inside Dark Room!');
+        return;
+    }
+
+    let slotIndex = gameState.selectedActionSlot;
+    if (slotIndex === null || slotIndex === undefined) {
+        slotIndex = player.actions.indexOf(null);
+    }
+    if (slotIndex < 0) {
+        setMessage('Select an action slot before replacing an action.');
+        return;
+    }
+
+    playSound('click');
+    player.actions[slotIndex] = action;
+    gameState.selectedActionSlot = player.actions.indexOf(null);
+    if (gameState.selectedActionSlot < 0) gameState.selectedActionSlot = null;
+    renderProgrammingPanel();
+}
 function confirmActions() {
     const player = gameState.players[gameState.currentPlayerIndex];
     if (!player.actions[0] || !player.actions[1]) return;
 
+    playSound('lockIn');
     addLog(`${player.name} has programmed their actions.`, 'info');
 
     // Move to next player
@@ -605,6 +822,7 @@ function confirmActions() {
         startResolutionPhase();
     } else {
         gameState.currentPlayerIndex = nextIdx;
+        gameState.selectedActionSlot = 0;
         showTurnOverlay(
             `${gameState.players[nextIdx].name.toUpperCase()}`,
             `It's your turn to program 2 actions.\nDon't let others see your choices!`
@@ -777,7 +995,10 @@ function onTileClick(row, col) {
     if (gameState.gameOver) return;
 
     const input = gameState.waitingForInput;
-    if (!input) return;
+    if (!input) {
+        onTileHover(row, col);
+        return;
+    }
 
     const player = gameState.players[gameState.currentPlayerIndex];
 
@@ -789,6 +1010,7 @@ function onTileClick(row, col) {
 
         // Peek at the room (show privately)
         const info = ROOM_TYPES[room.type];
+        playSound('peek');
         showPeekModal(room);
         addLog(`${player.name} peeked at (${row + 1},${col + 1})`, 'info');
         player.hasActed[gameState.currentActionIndex] = true;
@@ -797,7 +1019,6 @@ function onTileClick(row, col) {
         // Don't reveal it on the board!
         return;
     }
-
     if (input === 'direction') {
         // Move: must be adjacent
         if (!isAdjacent(player.row, player.col, row, col)) return;
@@ -816,6 +1037,7 @@ function onTileClick(row, col) {
         // Vision chamber: peek at any hidden room
         const room = gameState.board[row][col];
         if (room.revealed) return;
+        playSound('peek');
         showPeekModal(room);
         addLog(`${player.name} used Vision Chamber to peek at (${row + 1},${col + 1})`, 'success');
         gameState.waitingForInput = null;
@@ -827,7 +1049,7 @@ function onTileClick(row, col) {
     if (input === 'moving-tile') {
         // Moving chamber: swap with any hidden room
         const room = gameState.board[row][col];
-        if (room.revealed) return;
+        playSound('slide');
 
         const oldRow = player.row;
         const oldCol = player.col;
@@ -931,6 +1153,8 @@ function executeMove(player, targetRow, targetCol) {
     const room = gameState.board[targetRow][targetCol];
     const wasHidden = !room.revealed;
     room.revealed = true;
+    playSound('move');
+    if (wasHidden) playSound('reveal');
 
     addLog(`${player.name} moved to (${targetRow + 1},${targetCol + 1})`, 'info');
 
@@ -968,6 +1192,8 @@ function executePush(target, targetRow, targetCol) {
     const room = gameState.board[targetRow][targetCol];
     const wasHidden = !room.revealed;
     room.revealed = true;
+    playSound('push');
+    if (wasHidden) playSound('reveal');
 
     addLog(`${player.name} pushed ${target.name} to (${targetRow + 1},${targetCol + 1})!`, 'warning');
 
@@ -991,29 +1217,37 @@ function executeSlide(type, index, direction) {
     gameState.waitingForInput = null;
     const player = gameState.players[gameState.currentPlayerIndex];
 
+    playSound('slide');
     addLog(`${player.name} used CONTROL to slide ${type} ${index + 1} ${direction > 0 ? (type === 'row' ? 'right' : 'down') : (type === 'row' ? 'left' : 'up')}`, 'info');
 
-    if (type === 'row') {
-        slideRow(index, direction);
+    let escapeResult = null;
+    if (typeof Room25Engine !== 'undefined') {
+        escapeResult = Room25Engine.checkEscapeSlide(gameState, type, index, direction, player);
+        Room25Engine.executeSlide(gameState, type, index, direction);
     } else {
-        slideCol(index, direction);
+        if (type === 'row') slideRow(index, direction);
+        else slideCol(index, direction);
     }
 
     player.hasActed[gameState.currentActionIndex] = true;
 
-    // Check if room25 was slid off the board (win condition!)
-    checkWinBySlide();
+    if (escapeResult) {
+        endGame(escapeResult.victory, escapeResult.message);
+        return;
+    }
 
     renderGame();
     setTimeout(() => advanceToNextAction(), 600);
 }
 
 function slideRow(rowIdx, dir) {
+    if (typeof Room25Engine !== 'undefined') {
+        Room25Engine.executeSlide(gameState, 'row', rowIdx, dir);
+        return;
+    }
     const board = gameState.board;
     const row = board[rowIdx];
-
     if (dir > 0) {
-        // Slide right: last element wraps to first
         const last = row[4];
         for (let c = 4; c > 0; c--) {
             row[c] = row[c - 1];
@@ -1022,7 +1256,6 @@ function slideRow(rowIdx, dir) {
         row[0] = last;
         row[0].col = 0;
     } else {
-        // Slide left: first element wraps to last
         const first = row[0];
         for (let c = 0; c < 4; c++) {
             row[c] = row[c + 1];
@@ -1031,8 +1264,6 @@ function slideRow(rowIdx, dir) {
         row[4] = first;
         row[4].col = 4;
     }
-
-    // Move players in this row
     gameState.players.forEach(p => {
         if (p.alive && p.row === rowIdx) {
             p.col += dir;
@@ -1040,18 +1271,16 @@ function slideRow(rowIdx, dir) {
             if (p.col > 4) p.col = 0;
         }
     });
-
-    // Update row references
-    for (let c = 0; c < 5; c++) {
-        row[c].row = rowIdx;
-    }
+    for (let c = 0; c < 5; c++) row[c].row = rowIdx;
 }
 
 function slideCol(colIdx, dir) {
+    if (typeof Room25Engine !== 'undefined') {
+        Room25Engine.executeSlide(gameState, 'col', colIdx, dir);
+        return;
+    }
     const board = gameState.board;
-
     if (dir > 0) {
-        // Slide down: last element wraps to first
         const last = board[4][colIdx];
         for (let r = 4; r > 0; r--) {
             board[r][colIdx] = board[r - 1][colIdx];
@@ -1060,7 +1289,6 @@ function slideCol(colIdx, dir) {
         board[0][colIdx] = last;
         board[0][colIdx].row = 0;
     } else {
-        // Slide up: first element wraps to last
         const first = board[0][colIdx];
         for (let r = 0; r < 4; r++) {
             board[r][colIdx] = board[r + 1][colIdx];
@@ -1069,8 +1297,6 @@ function slideCol(colIdx, dir) {
         board[4][colIdx] = first;
         board[4][colIdx].row = 4;
     }
-
-    // Move players in this column
     gameState.players.forEach(p => {
         if (p.alive && p.col === colIdx) {
             p.row += dir;
@@ -1078,11 +1304,7 @@ function slideCol(colIdx, dir) {
             if (p.row > 4) p.row = 0;
         }
     });
-
-    // Update col references
-    for (let r = 0; r < 5; r++) {
-        board[r][colIdx].col = colIdx;
-    }
+    for (let r = 0; r < 5; r++) board[r][colIdx].col = colIdx;
 }
 
 // ==================== ROOM EFFECTS ====================
@@ -1107,10 +1329,13 @@ function triggerRoomEffect(player, room) {
 
         case 'trapped':
             // Must leave by next action
+            playSound('turnAlert');
             player.trapped = true;
+            player.trappedRound = gameState.currentRound;
+            player.trappedActionIndex = gameState.currentActionIndex;
             player.trappedTurns = 0;
-            addLog(`${player.name} is TRAPPED! Must escape before next turn!`, 'danger');
-            setMessage(`${player.name} is TRAPPED! They must leave soon or die!`);
+            addLog(`${player.name} is TRAPPED! Must escape on their next action or die!`, 'danger');
+            setMessage(`${player.name} is TRAPPED! They must escape on next action!`);
             advanceToNextAction();
             break;
 
@@ -1120,12 +1345,14 @@ function triggerRoomEffect(player, room) {
             break;
 
         case 'flooded':
+            playSound('water');
             addLog(`🌊 ${player.name} enters the Flooded Room. Stay 2 consecutive rounds and you'll drown!`, 'warning');
             advanceToNextAction();
             break;
 
         case 'vortex':
             // Send back to central
+            playSound('vortex');
             player.row = 2;
             player.col = 2;
             addLog(`${player.name} was caught in a VORTEX! Sent back to Central Room!`, 'warning');
@@ -1135,6 +1362,7 @@ function triggerRoomEffect(player, room) {
 
         case 'freezer':
             player.frozen = true;
+            playSound('freeze');
             addLog(`${player.name} is FROZEN! They lose their next action!`, 'warning');
             advanceToNextAction();
             break;
@@ -1179,6 +1407,7 @@ function triggerRoomEffect(player, room) {
             break;
 
         case 'room25':
+            playSound('room25');
             addLog(`${player.name} found ROOM 25! THE EXIT!`, 'success');
             setMessage(`ROOM 25 FOUND! Use Control to slide it off the board to escape!`);
             advanceToNextAction();
@@ -1232,7 +1461,7 @@ function handleAcidBath(enteringPlayer, room) {
             // Random among those present
             victim = playersHere[Math.floor(Math.random() * playersHere.length)];
         }
-        killPlayer(victim, 'was dissolved in the Acid Bath!');
+        killPlayer(victim, 'was dissolved in the Acid Bath!', 'acid');
     } else {
         addLog(`${enteringPlayer.name} enters the Acid Bath. Dangerous if someone else joins!`, 'warning');
         advanceToNextAction();
@@ -1273,7 +1502,8 @@ function checkIllusionExit(fromRow, fromCol) {
         renderBoard();
     }
 }
-function killPlayer(player, reason) {
+function killPlayer(player, reason, soundType = 'death') {
+    playSound(soundType);
     player.alive = false;
     addLog(`☠ ${player.name} ${reason}`, 'danger');
     setMessage(`☠ ${player.name} ${reason}`);
@@ -1325,38 +1555,38 @@ function advanceToNextAction() {
     gameState.waitingForInput = null;
     clearHighlights();
 
-    // Try next action for current player
-    if (gameState.currentActionIndex === 0) {
-        gameState.currentActionIndex = 1;
-        renderGame();
-        if (gameState.players[gameState.currentPlayerIndex]?.alive) {
-            setTimeout(() => beginCurrentAction(), 400);
-        } else {
-            setTimeout(() => advanceToNextPlayer(), 400);
-        }
-        return;
-    }
-
-    // Current player done, go to next player
-    advanceToNextPlayer();
-}
-
-function advanceToNextPlayer() {
     if (gameState.gameOver) return;
 
-    const nextIdx = getNextAlivePlayerIndex(gameState.currentPlayerIndex);
+    // Find next alive player for the current action index (Action 1 for all players, then Action 2)
+    let nextIdx = gameState.currentPlayerIndex + 1;
+    while (nextIdx < gameState.players.length && !gameState.players[nextIdx].alive) {
+        nextIdx++;
+    }
 
-    if (nextIdx === -1 || nextIdx <= gameState.currentPlayerIndex) {
-        // All players have acted — end of round
-        endRound();
+    if (nextIdx < gameState.players.length) {
+        // Next player performs their current action index
+        gameState.currentPlayerIndex = nextIdx;
+        renderGame();
+        setTimeout(() => beginCurrentAction(), 400);
         return;
     }
 
-    gameState.currentPlayerIndex = nextIdx;
-    gameState.currentActionIndex = 0;
-
-    renderGame();
-    setTimeout(() => beginCurrentAction(), 400);
+    // All players have performed the current action index
+    if (gameState.currentActionIndex === 0) {
+        // Switch to Action 2, start back with first alive player
+        gameState.currentActionIndex = 1;
+        let firstAlive = 0;
+        while (firstAlive < gameState.players.length && !gameState.players[firstAlive].alive) {
+            firstAlive++;
+        }
+        gameState.currentPlayerIndex = firstAlive;
+        addLog(`--- Resolving Action 2 ---`, 'info');
+        renderGame();
+        setTimeout(() => beginCurrentAction(), 400);
+    } else {
+        // Both Action 1 and Action 2 have been completed by all players!
+        endRound();
+    }
 }
 
 function endRound() {
@@ -1380,7 +1610,7 @@ function endRound() {
         if (curRoom.type === 'flooded') {
             p.floodedTurns = (p.floodedTurns || 0) + 1;
             if (p.floodedTurns >= 2) {
-                killPlayer(p, 'drowned in the Flooded Room!');
+                killPlayer(p, 'drowned in the Flooded Room!', 'water');
             } else {
                 addLog(`🌊 Water is rising in the Flooded Room! ${p.name} will drown next round!`, 'warning');
             }
@@ -1397,9 +1627,12 @@ function endRound() {
         }
     });
 
-    // Check time limit
-    if (gameState.currentRound >= gameState.maxRounds) {
-        endGame(false, 'Time ran out! The complex has sealed itself forever.');
+    const timeout = Room25Engine.getTimeLimitResult(
+        gameState,
+        'Time ran out! The complex has sealed itself forever.'
+    );
+    if (timeout) {
+        endGame(timeout.victory, timeout.message);
         return;
     }
 
@@ -1408,6 +1641,7 @@ function endRound() {
     gameState.phase = 'programming';
     gameState.currentPlayerIndex = 0;
     gameState.currentActionIndex = 0;
+    gameState.selectedActionSlot = 0;
 
     // Reset player actions
     gameState.players.forEach(p => {
@@ -1438,72 +1672,33 @@ function checkTrappedPlayers() {
             const room = gameState.board[p.row][p.col];
             if (room.type !== 'trapped') {
                 p.trapped = false;
-                p.trappedTurns = 0;
+                p.trappedRound = undefined;
+                p.trappedActionIndex = undefined;
                 addLog(`${p.name} escaped the Trapped Room!`, 'success');
             }
         }
     });
+
+    // Check Trapped execution: must leave by the end of their next action
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+    if (currentPlayer && currentPlayer.alive && currentPlayer.trapped) {
+        if (currentPlayer.trappedRound !== undefined && currentPlayer.trappedActionIndex !== undefined) {
+            const actionsPassed = (gameState.currentRound - currentPlayer.trappedRound) * 2 + (gameState.currentActionIndex - currentPlayer.trappedActionIndex);
+            if (actionsPassed >= 1) {
+                killPlayer(currentPlayer, 'failed to escape the Trapped Room and was executed!');
+                currentPlayer.trapped = false;
+            }
+        }
+    }
 }
 
 // ==================== WIN/LOSE CONDITIONS ====================
 
-function checkWinBySlide() {
-    // Check if room25 is at an edge position and was just slid
-    // In the board game, winning = all prisoners in room25 + control to slide it off
-    // We simulate: if control slides room25 off the edge, check who's on it
-
-    // Find room25
-    let room25Pos = null;
-    for (let r = 0; r < 5; r++) {
-        for (let c = 0; c < 5; c++) {
-            if (gameState.board[r][c].type === 'room25') {
-                room25Pos = { row: r, col: c };
-            }
-        }
-    }
-
-    if (!room25Pos) {
-        // Room 25 was slid off! Check who escaped
-        const escapees = gameState.players.filter(p => p.alive);
-        // Actually room25 wraps around, so let's handle this differently
-        // In the real game, you slide room25 to an edge, then one more control to eject it
-        return;
-    }
-
-    // Alternative win check: if room25 is at any edge and all alive prisoners are on it
-    if (room25Pos && gameState.board[room25Pos.row][room25Pos.col].revealed) {
-        const isEdge = room25Pos.row === 0 || room25Pos.row === 4 ||
-                       room25Pos.col === 0 || room25Pos.col === 4;
-
-        if (isEdge) {
-            const alivePlayers = gameState.players.filter(p => p.alive);
-            const playersOnRoom25 = alivePlayers.filter(p =>
-                p.row === room25Pos.row && p.col === room25Pos.col
-            );
-
-            if (gameState.mode === 'cooperative' || gameState.mode === 'suspicion') {
-                // All alive prisoners must be on room25
-                const prisoners = alivePlayers.filter(p => p.role !== 'guard');
-                const prisonersOnR25 = prisoners.filter(p =>
-                    p.row === room25Pos.row && p.col === room25Pos.col
-                );
-
-                if (prisonersOnR25.length === prisoners.length && prisoners.length > 0) {
-                    endGame(true, 'All prisoners escaped through Room 25! FREEDOM!');
-                }
-            } else if (gameState.mode === 'competition') {
-                if (playersOnRoom25.length > 0) {
-                    const winners = playersOnRoom25.map(p => p.name).join(', ');
-                    endGame(true, `${winners} escaped through Room 25!`);
-                }
-            }
-        }
-    }
-}
 
 function endGame(victory, message) {
+    if (gameState.gameOver) return;
     gameState.gameOver = true;
-
+    playSound(victory ? 'victory' : 'error');
     const overlay = document.getElementById('gameover-overlay');
     const content = overlay.querySelector('.gameover-content');
     const title = document.getElementById('gameover-title');
@@ -1540,7 +1735,10 @@ function endGame(victory, message) {
         </div>
     `;
 
-    overlay.classList.remove('hidden');
+    Room25UI.openDialog(overlay, {
+        initialFocus: () => overlay.querySelector('button'),
+        focusFallback: () => document.querySelector('#screen-game'),
+    });
     addLog(victory ? '🎉 VICTORY!' : '💀 DEFEAT!', victory ? 'success' : 'danger');
     addLog(message, 'info');
 }
@@ -1585,6 +1783,27 @@ function getTileElement(row, col) {
     return document.querySelector(`.room-tile[data-row="${row}"][data-col="${col}"]`);
 }
 
+function renderWaitingInputHighlights() {
+    const player = gameState.players[gameState.currentPlayerIndex];
+    if (!player || !player.alive) return;
+
+    switch (gameState.waitingForInput) {
+        case 'peek-tile':
+            highlightAdjacentTiles(player.row, player.col, 'peek');
+            break;
+        case 'direction':
+            highlightAdjacentTiles(player.row, player.col, 'move');
+            break;
+        case 'push-direction':
+            highlightAdjacentTiles(player.row, player.col, 'push');
+            break;
+        case 'vision-tile':
+        case 'moving-tile':
+            highlightAllHiddenTiles();
+            break;
+    }
+}
+
 function isAdjacent(r1, c1, r2, c2) {
     return (Math.abs(r1 - r2) + Math.abs(c1 - c2)) === 1;
 }
@@ -1622,13 +1841,18 @@ function showPeekModal(room) {
     `;
     desc.textContent = info.desc;
 
-    modal.classList.remove('hidden');
+    Room25UI.openDialog(modal, {
+        initialFocus: () => modal.querySelector('button'),
+        restoreTarget: () => document.querySelector('#game-board .room-tile[tabindex="0"]'),
+    });
 }
 
 function closePeekModal() {
-    document.getElementById('peek-modal').classList.add('hidden');
-
-    // If this was a regular peek, advance action
+    Room25UI.closeDialog(document.getElementById('peek-modal'));
+    const display = document.getElementById('peek-room-display');
+    display.className = 'peek-room-display';
+    display.replaceChildren();
+    document.getElementById('peek-room-desc').textContent = '';
     if (!gameState.bonusAction) {
         advanceToNextAction();
     } else {
@@ -1636,22 +1860,44 @@ function closePeekModal() {
     }
 }
 
+
 // Turn Overlay
 function showTurnOverlay(title, text) {
+    gameState.privateRoleVisible = false;
     const overlay = document.getElementById('turn-overlay');
     document.getElementById('turn-overlay-title').textContent = title;
     document.getElementById('turn-overlay-text').textContent = text;
-    overlay.classList.remove('hidden');
+    Room25UI.openDialog(overlay, {
+        initialFocus: () => overlay.querySelector('button'),
+        restoreTarget: () => document.querySelector('#game-board .room-tile[tabindex="0"]'),
+    });
 }
 
 function dismissOverlay() {
-    document.getElementById('turn-overlay').classList.add('hidden');
+    Room25UI.closeDialog(document.getElementById('turn-overlay'));
+    gameState.privateRoleVisible = true;
+    if (gameState.mode === 'suspicion' && gameState.phase === 'programming') {
+        renderPlayerList();
+    }
 }
 
 // Game Log
+let gameLogPreviousFocus = null;
 function toggleGameLog() {
     const log = document.getElementById('game-log');
-    log.classList.toggle('hidden');
+    if (log.classList.contains('hidden')) {
+        gameLogPreviousFocus = document.activeElement;
+        log.classList.remove('hidden');
+        log.querySelector('button').focus({ preventScroll: true });
+    } else {
+        log.classList.add('hidden');
+        const menu = gameLogPreviousFocus?.closest('[data-hud-overflow-menu]');
+        const restoreTarget = menu && !menu.open ? menu.querySelector('summary') : gameLogPreviousFocus;
+        if (restoreTarget && restoreTarget.isConnected) {
+            restoreTarget.focus({ preventScroll: true });
+        }
+        gameLogPreviousFocus = null;
+    }
 }
 
 function addLog(message, type = 'info') {
@@ -1667,9 +1913,21 @@ function addLog(message, type = 'info') {
 
 // Quit
 function confirmQuit() {
-    if (confirm('Are you sure you want to quit the current game?')) {
-        showScreen('screen-menu');
-    }
+    const modal = document.getElementById('quit-confirm-modal');
+    if (!modal) return;
+    Room25UI.openDialog(modal, {
+        initialFocus: () => modal.querySelector('.quit-cancel-btn'),
+        onEscape: closeQuitConfirmation,
+    });
+}
+
+function closeQuitConfirmation() {
+    Room25UI.closeDialog(document.getElementById('quit-confirm-modal'));
+}
+
+function quitToMenu() {
+    Room25UI.closeDialog(document.getElementById('quit-confirm-modal'), { restoreFocus: false });
+    showScreen('screen-menu');
 }
 
 // ==================== ROOM EFFECTS & RESTRICTIONS GUIDE MODAL ====================
@@ -1677,23 +1935,31 @@ let currentRoomGuideTab = 'rules';
 
 function openRoomGuideModal(tab = 'rules') {
     currentRoomGuideTab = tab;
-    document.querySelectorAll('.rg-tab').forEach(b => {
-        b.classList.toggle('active', b.dataset.tab === tab);
+    document.querySelectorAll('.rg-tab').forEach(button => {
+        const selected = button.dataset.tab === tab;
+        button.classList.toggle('active', selected);
+        button.setAttribute('aria-pressed', String(selected));
     });
     renderRoomGuideContent();
     const modal = document.getElementById('modal-room-guide');
-    if (modal) modal.classList.remove('hidden');
+    if (modal) {
+        Room25UI.openDialog(modal, {
+            initialFocus: () => modal.querySelector('.room-guide-close-btn'),
+            onEscape: closeRoomGuideModal,
+        });
+    }
 }
 
 function closeRoomGuideModal() {
-    const modal = document.getElementById('modal-room-guide');
-    if (modal) modal.classList.add('hidden');
+    Room25UI.closeDialog(document.getElementById('modal-room-guide'));
 }
 
 function switchRoomGuideTab(tab) {
     currentRoomGuideTab = tab;
-    document.querySelectorAll('.rg-tab').forEach(b => {
-        b.classList.toggle('active', b.dataset.tab === tab);
+    document.querySelectorAll('.rg-tab').forEach(button => {
+        const selected = button.dataset.tab === tab;
+        button.classList.toggle('active', selected);
+        button.setAttribute('aria-pressed', String(selected));
     });
     renderRoomGuideContent();
 }

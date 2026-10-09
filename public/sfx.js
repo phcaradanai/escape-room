@@ -145,6 +145,28 @@ class SoundFxManager {
         osc.start(now);
         osc.stop(now + 0.45);
     }
+    // Reveal room tile (energetic sci-fi pulse)
+    reveal() {
+        if (this.muted) return;
+        this.ensureContext();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(750, now + 0.18);
+
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.28);
+    }
 
     // Step / Move footsteps
     move() {
@@ -241,6 +263,84 @@ class SoundFxManager {
         osc.start(now);
         osc.stop(now + 0.9);
     }
+    // Gravitational Vortex Whoosh
+    vortex() {
+        if (this.muted) return;
+        this.ensureContext();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(110, now + 0.4);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.5);
+    }
+
+    // Frost Freezing Glass Crack
+    freeze() {
+        if (this.muted) return;
+        this.ensureContext();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        [880, 1320, 1760].forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.05);
+            gain.gain.setValueAtTime(0.12, now + idx * 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.05 + 0.3);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + idx * 0.05);
+            osc.stop(now + idx * 0.05 + 0.3);
+        });
+    }
+
+    // Caustic Acid Sizzle
+    acid() {
+        if (this.muted) return;
+        this.ensureContext();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(240, now);
+        osc.frequency.linearRampToValueAtTime(380, now + 0.2);
+        osc.frequency.linearRampToValueAtTime(160, now + 0.4);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.45);
+    }
+
+    // Rising Flood Water Surge
+    water() {
+        if (this.muted) return;
+        this.ensureContext();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(90, now);
+        osc.frequency.linearRampToValueAtTime(180, now + 0.3);
+        osc.frequency.linearRampToValueAtTime(110, now + 0.6);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.65);
+    }
 
     // Room 25 Discovered / Triumph
     room25() {
@@ -297,5 +397,30 @@ class SoundFxManager {
 }
 
 const sfx = new SoundFxManager();
+try {
+    sfx.muted = localStorage.getItem('room25_muted') === 'true';
+} catch (e) {}
+
+function syncSoundToggleButtons() {
+    document.querySelectorAll('.sound-toggle-btn').forEach(button => {
+        const soundIcon = button.querySelector('[data-sound-icon]');
+        if (soundIcon) {
+            soundIcon.textContent = sfx.muted ? '🔇' : '🔊';
+        } else {
+            button.textContent = sfx.muted ? '🔇' : '🔊';
+        }
+        button.classList.toggle('muted', sfx.muted);
+        button.setAttribute('aria-label', sfx.muted ? 'Sound muted; activate to unmute' : 'Sound on; activate to mute');
+        button.setAttribute('aria-pressed', String(sfx.muted));
+    });
+}
+
+function setSoundMuted(muted) {
+    sfx.muted = Boolean(muted);
+    try { localStorage.setItem('room25_muted', sfx.muted ? 'true' : 'false'); } catch (e) {}
+    syncSoundToggleButtons();
+}
+
+syncSoundToggleButtons();
 // Unlock audio on first user touch / click
 window.addEventListener('pointerdown', () => sfx.init(), { once: true });

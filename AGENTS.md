@@ -27,13 +27,14 @@ The application follows a server-authoritative architecture for online play and 
 ```
 
 ### Key Modules
-- **Game Server (`server.js`)**: Coordinates rooms (`Map<string, Room>`), player lifecycle, room code generation (4-character alphanumeric excluding ambiguous characters), action queues, and sanitized client projection.
-- **Online Client (`public/online-game.js`)**: Manages lobby screens, modal dialogs, bilingual localization, dynamic DOM grid rendering, and client-side Socket.IO dispatch.
-- **Audio Engine (`public/sfx.js`)**: Zero-dependency Web Audio API synthesizer (`SoundFxManager`) producing real-time procedural sound effects for alerts, clicks, slides, and hazards without external audio files.
-- **Standalone Engine (`game.js`)**: Independent client-side game state engine running standalone pass-and-play in `index.html`.
-
+- **Shared Engine (`public/game-engine.js`)**: Universal Module Definition (UMD) engine holding single-source truth for board generation, room distribution, sliding, illusion shifts, win checking, and sanitized projections.
+- **Game Server (`server.js`)**: Express + Socket.IO server utilizing `public/game-engine.js` for authoritative room simulations, player sessions, reconnection grace periods, and state broadcasting.
+- **Art & Characters (`public/game-art.js`)**: Procedural SVG artwork library for all 15 room types, 6 characters roster, and avatar tokens.
+- **Online Client (`public/online-game.js`)**: Manages lobby screens, modal dialogs, bilingual localization, dynamic DOM grid rendering, 3D card flips, directional slide animations, and Socket.IO dispatch.
+- **Audio Engine (`public/sfx.js`)**: Zero-dependency Web Audio API synthesizer (`SoundFxManager`) producing real-time procedural sound effects for alerts, clicks, slides, vortexes, freezes, acid, water surges, and hazards.
+- **Standalone Engine (`game.js`)**: In-memory pass-and-play controller in `index.html` utilizing `public/game-engine.js` and `public/game-art.js`.
 ## Key Directories
-- `/`: Server entry point (`server.js`), standalone offline game files (`index.html`, `game.js`, `styles.css`), Windows tunnel launcher script (`start-tunnel.bat`), and bundled Cloudflare binary (`cloudflared.exe`).
+- `/`: Server entry point (`server.js`), standalone offline game files (`index.html`, `game.js`), Windows tunnel launcher script (`start-tunnel.bat`), and bundled Cloudflare binary (`cloudflared.exe`). Both game modes load the canonical stylesheet from `/public/styles.css`.
 - `/public`: Static web assets served by Express for online multiplayer:
   - `public/index.html`: Online lobby and game interface markup.
   - `public/online-game.js`: Multiplayer frontend logic and Socket.IO client interface.
@@ -46,6 +47,10 @@ No build, transpilation, or bundling step is required. Assets are plain HTML, CS
 - **Install Dependencies**:
   ```bash
   npm install
+  ```
+- **Run Automated Test Suite**:
+  ```bash
+  npm test
   ```
 - **Run Online Server (Local)**:
   ```bash
@@ -104,12 +109,17 @@ No build, transpilation, or bundling step is required. Assets are plain HTML, CS
 - **Zero External Audio Assets**: SFX must remain generated procedurally via the Web Audio API in `public/sfx.js` to preserve offline portability.
 
 ## Testing & QA
-- **Current State**: No automated test framework (Jest/Vitest/Mocha) or CI/CD pipelines currently exist. `npm test` is a stub.
-- **Manual Verification Procedure**:
-  1. Start server with `node server.js`.
-  2. Open two or more distinct browser sessions (e.g., standard window and incognito window) at `http://localhost:3000`.
-  3. Create a room from window A; record the 4-character room code.
-  4. Join the room from window B with the code.
-  5. Select distinct characters, set ready state, and start game.
-  6. Exercise Programming Phase (lock 2 actions) and Resolution Phase (verify tile peeking, moving, pushing, and sliding).
-  7. Verify state isolation: check that window B cannot view window A's hidden role or unrevealed private peeks.
+- **Automated Test Suite**: Node.js native test runner (`node:test`); `npm test` runs `node --test` and discovers test files.
+- **Coverage**:
+  - `NET-01`–`NET-04`: public player projection, nickname sanitization, action privacy, and Socket.IO validation/permission enforcement.
+  - `TEST-01`: Board initialization, center placement, deck distribution, Room 25 presence, and twin pairing.
+  - `TEST-02`: Row and column sliding (Control) with wrap-around mechanics.
+  - `TEST-03`: Moving Chamber position swapping and occupant travel.
+  - `TEST-04`: Illusion room shifting upon player exit.
+  - `TEST-05`: Flooded room turn counters and drowning resolution at `endRound`.
+  - `TEST-06` [R07]: Production slide path does not win by merely reaching the edge; outward Room 25 ejection wins with all surviving prisoners aboard.
+  - `TEST-07`: Fog of War and sanitized state projection.
+  - `TEST-08` [R07]: Outward Room 25 ejection triggers escape; inward and unrelated slides do not.
+  - `TEST-09` [R08]: Private peek knowledge remaps with sliding tiles.
+  - `TEST-10` [R13]: Ultimate character ability validation and execution.
+  - `TEST-11`: Suspicion awards its time-limit outcome to the Guards; other modes keep their timeout message.

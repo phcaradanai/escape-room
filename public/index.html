@@ -17,12 +17,13 @@
     <!-- Language & Sound Selector Floating Switcher -->
     <div class="lang-switcher">
         <button class="sound-toggle-btn" id="sound-btn" onclick="toggleAudio()" title="Toggle Sound">🔊</button>
-        <button class="lang-btn active" data-lang="th" onclick="setLanguage('th')">🇹🇭 ไทย</button>
-        <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">🇬🇧 EN</button>
+        <button class="lang-btn active" data-lang="th" data-i18n-aria-label="languageThai" aria-pressed="true" onclick="setLanguage('th')">🇹🇭 ไทย</button>
+        <button class="lang-btn" data-lang="en" data-i18n-aria-label="languageEnglish" aria-pressed="false" onclick="setLanguage('en')">🇬🇧 EN</button>
     </div>
+    <div id="online-feedback" class="online-feedback hidden" role="status" aria-live="polite"></div>
 
     <!-- ==================== MAIN MENU / ONLINE LOBBY ENTRY ==================== -->
-    <div id="screen-menu" class="screen active">
+    <div id="screen-menu" class="screen active" role="main" aria-hidden="false">
         <div class="menu-bg">
             <div class="grid-lines"></div>
             <div class="floating-particles" id="particles"></div>
@@ -40,8 +41,8 @@
 
             <div class="online-login-box">
                 <div class="input-field-group">
-                    <label data-i18n="playerCodename">ชื่อผู้เล่น / โค้ดเนม</label>
-                    <input type="text" id="player-nickname" placeholder="เช่น ผู้เล่น 1" maxlength="16" value="ผู้เล่น 1">
+                    <label for="player-nickname" data-i18n="playerCodename">ชื่อผู้เล่น / โค้ดเนม</label>
+                    <input type="text" id="player-nickname" placeholder="เช่น ผู้เล่น 1" maxlength="16" value="ผู้เล่น 1" autocomplete="nickname">
                 </div>
 
                 <div class="menu-buttons">
@@ -71,22 +72,22 @@
     </div>
 
     <!-- ==================== CREATE ROOM MODAL ==================== -->
-    <div id="modal-create-room" class="modal hidden">
+    <div id="modal-create-room" class="modal hidden" role="dialog" aria-labelledby="create-room-title" onclick="if(event.target===this) closeModals()">
         <div class="modal-content setup-modal-content">
-            <h2 class="setup-title" data-i18n="hostTitle">ตั้งค่าสร้างห้องแข่งขันใหม่</h2>
+            <h2 id="create-room-title" class="setup-title" data-i18n="hostTitle">ตั้งค่าสร้างห้องแข่งขันใหม่</h2>
             <div class="setup-section">
                 <h3 data-i18n="gameMode">โหมดการเล่น</h3>
                 <div class="mode-selector">
-                    <button class="mode-btn active" data-mode="cooperative" onclick="selectModalMode(this)">
-                        <div class="mode-icon">🤝</div>
+                    <button class="mode-btn active" data-mode="cooperative" aria-pressed="true" onclick="selectModalMode(this)">
+                        <div class="mode-icon" aria-hidden="true">🤝</div>
                         <div class="mode-name" data-i18n="coopMode">ร่วมมือ (COOP)</div>
                     </button>
-                    <button class="mode-btn" data-mode="suspicion" onclick="selectModalMode(this)">
-                        <div class="mode-icon">🕵️</div>
+                    <button class="mode-btn" data-mode="suspicion" aria-pressed="false" onclick="selectModalMode(this)">
+                        <div class="mode-icon" aria-hidden="true">🕵️</div>
                         <div class="mode-name" data-i18n="suspicionMode">จับคนทรยศ (SUSPICION)</div>
                     </button>
-                    <button class="mode-btn" data-mode="competition" onclick="selectModalMode(this)">
-                        <div class="mode-icon">⚔️</div>
+                    <button class="mode-btn" data-mode="competition" aria-pressed="false" onclick="selectModalMode(this)">
+                        <div class="mode-icon" aria-hidden="true">⚔️</div>
                         <div class="mode-name" data-i18n="competitionMode">เอาชีวิตรอดเดี่ยว</div>
                     </button>
                 </div>
@@ -94,25 +95,27 @@
             <div class="setup-section">
                 <h3 data-i18n="roundsDifficulty">จำนวนรอบ (ความยาก)</h3>
                 <div class="difficulty-selector">
-                    <button class="diff-btn" data-diff="8" onclick="selectModalDiff(this)" data-i18n="easy">8 รอบ (ง่าย)</button>
-                    <button class="diff-btn active" data-diff="10" onclick="selectModalDiff(this)" data-i18n="normal">10 รอบ (ปกติ)</button>
-                    <button class="diff-btn" data-diff="7" onclick="selectModalDiff(this)" data-i18n="hard">7 รอบ (ยาก)</button>
+                    <button class="diff-btn" data-diff="10" aria-pressed="false" onclick="selectModalDiff(this)" data-i18n="easy">10 รอบ (ง่าย)</button>
+                    <button class="diff-btn active" data-diff="8" aria-pressed="true" onclick="selectModalDiff(this)" data-i18n="normal">8 รอบ (ปกติ)</button>
+                    <button class="diff-btn" data-diff="6" aria-pressed="false" onclick="selectModalDiff(this)" data-i18n="hard">6 รอบ (ยาก)</button>
                 </div>
             </div>
             <div class="modal-actions">
                 <button class="menu-btn" onclick="closeModals()" data-i18n="cancel">ยกเลิก</button>
                 <button class="menu-btn primary" onclick="submitCreateRoom()" data-i18n="create">ยืนยันสร้างห้อง</button>
-            </div>
         </div>
+    </div>
     </div>
 
     <!-- ==================== JOIN ROOM MODAL ==================== -->
-    <div id="modal-join-room" class="modal hidden">
+    <div id="modal-join-room" class="modal hidden" role="dialog" aria-labelledby="join-room-title" onclick="if(event.target===this) closeModals()">
         <div class="modal-content">
-            <h3 data-i18n="joinTitle">ใส่รหัสห้อง 4 หลัก</h3>
+            <h3 id="join-room-title" data-i18n="joinTitle">ใส่รหัสห้อง 4 หลัก</h3>
             <div class="input-field-group">
-                <input type="text" id="join-room-code" placeholder="ABCD" maxlength="4" style="text-transform: uppercase; text-align: center; font-size: 1.5rem; letter-spacing: 5px;">
+                <label class="visually-hidden" for="join-room-code" data-i18n="joinTitle">ใส่รหัสห้อง 4 หลัก</label>
+                <input type="text" id="join-room-code" placeholder="ABCD" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" style="text-transform: uppercase; text-align: center; font-size: 1.5rem; letter-spacing: 5px;">
             </div>
+            <p id="join-room-feedback" class="inline-feedback hidden" role="alert" aria-live="assertive"></p>
             <div class="modal-actions" style="margin-top: 15px;">
                 <button class="menu-btn" onclick="closeModals()" data-i18n="cancel">ยกเลิก</button>
                 <button class="menu-btn primary" onclick="submitJoinRoom()" data-i18n="joinBtn">เข้าห้อง</button>
@@ -120,24 +123,24 @@
         </div>
     </div>
     <!-- ==================== ROOM EFFECTS & RESTRICTIONS MODAL ==================== -->
-    <div id="modal-room-guide" class="modal hidden" onclick="if(event.target===this) closeRoomGuideModal()">
+    <div id="modal-room-guide" class="modal hidden" role="dialog" aria-labelledby="room-guide-title" onclick="if(event.target===this) closeRoomGuideModal()">
         <div class="modal-content room-guide-modal-content">
             <div class="room-guide-header">
                 <div class="room-guide-title-wrap">
-                    <span class="guide-header-icon">📖</span>
-                    <h2 class="room-guide-title" data-i18n="roomGuideTitle">คู่มือเอฟเฟกต์ห้องและข้อจำกัดการเล่น</h2>
+                    <span class="guide-header-icon" aria-hidden="true">📖</span>
+                    <h2 id="room-guide-title" class="room-guide-title" data-i18n="roomGuideTitle">คู่มือเอฟเฟกต์ห้องและข้อจำกัดการเล่น</h2>
                 </div>
-                <button class="room-guide-close-btn" onclick="closeRoomGuideModal()" title="Close">✕</button>
+                <button class="room-guide-close-btn" onclick="closeRoomGuideModal()" title="Close" data-i18n-aria-label="closeGuide">✕</button>
             </div>
 
             <!-- Category / Section Filter Tabs -->
             <div class="room-guide-tabs">
-                <button class="rg-tab active" data-tab="rules" onclick="switchRoomGuideTab('rules')" data-i18n="tabActionRules">📌 ข้อจำกัดแอ็กชัน</button>
-                <button class="rg-tab" data-tab="all" onclick="switchRoomGuideTab('all')" data-i18n="tabAllRooms">🌐 ทุกห้อง</button>
-                <button class="rg-tab" data-tab="safe" onclick="switchRoomGuideTab('safe')" data-i18n="tabSafeRooms">🟢 ปลอดภัย</button>
-                <button class="rg-tab" data-tab="warning" onclick="switchRoomGuideTab('warning')" data-i18n="tabWarningRooms">🟡 เตือนภัย</button>
-                <button class="rg-tab" data-tab="danger" onclick="switchRoomGuideTab('danger')" data-i18n="tabDangerRooms">🔴 อันตราย</button>
-                <button class="rg-tab" data-tab="special" onclick="switchRoomGuideTab('special')" data-i18n="tabSpecialRooms">🏠🚪 พิเศษ</button>
+                <button class="rg-tab active" data-tab="rules" aria-pressed="true" onclick="switchRoomGuideTab('rules')" data-i18n="tabActionRules">📌 ข้อจำกัดแอ็กชัน</button>
+                <button class="rg-tab" data-tab="all" aria-pressed="false" onclick="switchRoomGuideTab('all')" data-i18n="tabAllRooms">🌐 ทุกห้อง</button>
+                <button class="rg-tab" data-tab="safe" aria-pressed="false" onclick="switchRoomGuideTab('safe')" data-i18n="tabSafeRooms">🟢 ปลอดภัย</button>
+                <button class="rg-tab" data-tab="warning" aria-pressed="false" onclick="switchRoomGuideTab('warning')" data-i18n="tabWarningRooms">🟡 เตือนภัย</button>
+                <button class="rg-tab" data-tab="danger" aria-pressed="false" onclick="switchRoomGuideTab('danger')" data-i18n="tabDangerRooms">🔴 อันตราย</button>
+                <button class="rg-tab" data-tab="special" aria-pressed="false" onclick="switchRoomGuideTab('special')" data-i18n="tabSpecialRooms">🏠🚪 พิเศษ</button>
             </div>
 
             <!-- Content Area (Scrollable) -->
@@ -153,7 +156,7 @@
 
 
     <!-- ==================== LOBBY WAITING ROOM ==================== -->
-    <div id="screen-lobby" class="screen">
+    <div id="screen-lobby" class="screen" role="main" aria-hidden="true">
         <div class="setup-container">
             <h2 class="setup-title" data-i18n="lobbyTitle">ห้องพักรอผู้เข้าแข่งขัน</h2>
             <div class="lobby-code-banner">
@@ -164,7 +167,7 @@
 
             <div class="setup-section">
                 <h3><span data-i18n="connectedPlayers">ผู้เล่นที่เชื่อมต่อ</span> (<span id="connected-count">1</span>/8)</h3>
-                <div id="lobby-player-list" class="lobby-player-grid"></div>
+                <div id="lobby-player-list" class="lobby-player-grid" role="list" data-i18n-aria-label="connectedPlayers"></div>
             </div>
 
             <div class="setup-section">
@@ -188,7 +191,7 @@
     </div>
 
     <!-- ==================== ONLINE GAMEPLAY SCREEN ==================== -->
-    <div id="screen-game" class="screen">
+    <div id="screen-game" class="screen" role="main" aria-hidden="true">
         <!-- Top HUD -->
         <div class="game-hud-top">
             <div class="hud-left">
@@ -204,18 +207,25 @@
                 </div>
             </div>
             <div class="hud-center">
-                <div id="game-message" class="game-message">เตรียมเข้าสู่เขาวงกต...</div>
+                <div id="game-message" class="game-message" role="status" aria-live="polite">เตรียมเข้าสู่เขาวงกต...</div>
             </div>
             <div class="hud-right">
                 <div class="my-role-badge" id="my-role-display">ROLE: PRISONER</div>
-                <button class="sound-toggle-btn in-hud" id="hud-sound-btn" onclick="toggleAudio()" title="Toggle Sound">🔊</button>
-                <div class="hud-lang-group">
-                    <button class="lang-btn hud-lang" data-lang="th" onclick="setLanguage('th')">TH</button>
-                    <button class="lang-btn hud-lang" data-lang="en" onclick="setLanguage('en')">EN</button>
-                </div>
-                <button class="hud-btn" onclick="toggleGameLog()" title="Log">📋</button>
-                <button class="hud-btn highlight" id="hud-guide-btn" onclick="openRoomGuideModal()" title="Room Effects & Restrictions">📜 <span class="hud-btn-label" data-i18n="roomGuideBtn">คู่มือห้อง</span></button>
-                <button class="hud-btn" onclick="showScreen('screen-rules')" title="Rules">📖</button>
+                <details id="online-hud-menu" class="hud-overflow-menu" data-hud-overflow-menu open>
+                    <summary class="hud-overflow-trigger" aria-label="More game controls" data-i18n-aria-label="moreGameControls">
+                        <span aria-hidden="true">☰</span>
+                    </summary>
+                    <div class="hud-overflow-items">
+                        <button class="sound-toggle-btn in-hud" id="hud-sound-btn" onclick="toggleAudio()" title="Toggle Sound"><span data-sound-icon aria-hidden="true">🔊</span><span class="hud-overflow-label" data-i18n="soundLabel">Sound</span></button>
+                        <div class="hud-lang-group" role="group" aria-label="Choose language" data-i18n-aria-label="languagePicker">
+                            <button class="lang-btn hud-lang" data-lang="th" data-i18n-aria-label="languageThai" aria-pressed="false" onclick="setLanguage('th')">TH</button>
+                            <button class="lang-btn hud-lang" data-lang="en" data-i18n-aria-label="languageEnglish" aria-pressed="false" onclick="setLanguage('en')">EN</button>
+                        </div>
+                        <button class="hud-btn" onclick="toggleGameLog()" title="Log" data-i18n-aria-label="gameLog">📋<span class="hud-overflow-label" data-i18n="gameLogShort">Log</span></button>
+                        <button class="hud-btn highlight" id="hud-guide-btn" onclick="openRoomGuideModal()" title="Room Effects & Restrictions" data-i18n-aria-label="roomGuideBtn">📜 <span class="hud-btn-label" data-i18n="roomGuideBtn">คู่มือห้อง</span><span class="hud-overflow-label" data-i18n="roomGuideShort">Guide</span></button>
+                        <button class="hud-btn" onclick="showScreen('screen-rules')" title="Rules" data-i18n-aria-label="rules">📖<span class="hud-overflow-label" data-i18n="rules">Rules</span></button>
+                    </div>
+                </details>
             </div>
         </div>
 
@@ -223,7 +233,7 @@
             <!-- Left Panel - Players Status -->
             <div class="game-panel-left">
                 <div class="panel-header" data-i18n="connectedPlayers">ผู้เล่นออนไลน์</div>
-                <div id="player-list" class="player-list"></div>
+                <div id="player-list" class="player-list" role="list" data-i18n-aria-label="connectedPlayers"></div>
             </div>
 
             <!-- Center Board -->
@@ -238,13 +248,19 @@
                 <!-- Programming Interface -->
                 <div id="programming-panel" class="programming-panel">
                     <div class="action-slots">
-                        <div class="action-slot" id="action-slot-1">
-                            <span class="slot-label" data-i18n="action1">แอ็กชัน 1</span>
-                            <span class="slot-value">—</span>
+                        <div class="action-slot-group">
+                            <button type="button" class="action-slot" id="action-slot-1" aria-pressed="false" onclick="selectActionSlot(0)">
+                                <span class="slot-label" data-i18n="action1">แอ็กชัน 1</span>
+                                <span class="slot-value">—</span>
+                            </button>
+                            <button type="button" class="slot-clear hidden" onclick="clearActionSlot(0)" data-i18n-aria-label="clearAction1">×</button>
                         </div>
-                        <div class="action-slot" id="action-slot-2">
-                            <span class="slot-label" data-i18n="action2">แอ็กชัน 2</span>
-                            <span class="slot-value">—</span>
+                        <div class="action-slot-group">
+                            <button type="button" class="action-slot" id="action-slot-2" aria-pressed="false" onclick="selectActionSlot(1)">
+                                <span class="slot-label" data-i18n="action2">แอ็กชัน 2</span>
+                                <span class="slot-value">—</span>
+                            </button>
+                            <button type="button" class="slot-clear hidden" onclick="clearActionSlot(1)" data-i18n-aria-label="clearAction2">×</button>
                         </div>
                     </div>
 
@@ -270,7 +286,7 @@
                     <button class="confirm-btn" id="confirm-actions-btn" onclick="submitMyProgramming()" disabled data-i18n="lockInBtn">
                         ล็อคคำสั่งลับทั้ง 2 อย่าง
                     </button>
-                    <div id="lock-in-status" class="lock-in-status hidden" data-i18n="actionsLocked">
+                    <div id="lock-in-status" class="lock-in-status hidden" role="status" aria-live="polite" tabindex="-1" data-i18n="actionsLocked">
                         ล็อคคำสั่งแล้ว! กำลังรอผู้เล่นอื่น...
                     </div>
                 </div>
@@ -319,13 +335,13 @@
                         <div id="push-target-list" class="target-buttons"></div>
                     </div>
 
-                    <div id="action-prompt" class="action-prompt">กำลังรอรอบ...</div>
+                    <div id="action-prompt" class="action-prompt" role="status" aria-live="polite">กำลังรอรอบ...</div>
                 </div>
 
                 <!-- Room Detail Inspector -->
                 <div class="room-info-panel">
                     <div class="panel-header" data-i18n="roomIntel">ข้อมูลห้อง</div>
-                    <div id="room-info" class="room-info">
+                    <div id="room-info" class="room-info" role="region" data-i18n-aria-label="roomIntel">
                         <p class="room-info-placeholder" data-i18n="hoverIntel">เลื่อนเมาส์/แตะดูห้องที่เปิดแล้วเพื่ออ่านข้อมูล</p>
                     </div>
                 </div>
@@ -338,27 +354,30 @@
         </div>
 
         <!-- Game Log overlay -->
-        <div id="game-log" class="game-log hidden">
+        <div id="game-log" class="game-log hidden" role="region" aria-labelledby="game-log-title">
             <div class="log-header">
-                <span data-i18n="complexLogs">บันทึกเหตุการณ์</span>
-                <button onclick="toggleGameLog()">✕</button>
+                <span id="game-log-title" data-i18n="complexLogs">บันทึกเหตุการณ์</span>
+                <button onclick="toggleGameLog()" aria-label="Close game log">✕</button>
             </div>
             <div id="log-entries" class="log-entries"></div>
         </div>
 
         <!-- Game Over Modal -->
-        <div id="gameover-overlay" class="gameover-overlay hidden">
+        <div id="gameover-overlay" class="gameover-overlay hidden" role="dialog" aria-labelledby="gameover-title" aria-describedby="gameover-text">
             <div class="gameover-content">
                 <h1 id="gameover-title" data-i18n="gameOver">จบเกม</h1>
                 <p id="gameover-text"></p>
                 <div id="gameover-stats" class="gameover-stats"></div>
-                <button class="menu-btn primary" onclick="location.reload()" data-i18n="returnToLobby">กลับไปหน้าล็อบบี้</button>
+                <div class="modal-actions" style="margin-top:20px; gap:10px;">
+                    <button class="menu-btn primary" onclick="requestRematch()">🔄 <span data-i18n="rematchButton">เล่นใหม่อีกครั้ง</span></button>
+                    <button class="menu-btn secondary" onclick="location.reload()" data-i18n="returnToLobby">กลับไปหน้าล็อบบี้</button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- ==================== HOW TO PLAY SCREEN ==================== -->
-    <div id="screen-rules" class="screen">
+    <div id="screen-rules" class="screen" role="main" aria-hidden="true">
         <div class="rules-container">
             <button class="back-btn" onclick="goBack()" data-i18n="back">← ย้อนกลับ</button>
             <h2 class="rules-title" data-i18n="rulesTitle">กฎกติกาและวิธีเอาชีวิตรอด</h2>
@@ -379,7 +398,10 @@
         </div>
     </div>
 
+    <script src="game-engine.js"></script>
+    <script src="game-art.js"></script>
     <script src="sfx.js"></script>
+    <script src="ui-accessibility.js"></script>
     <script src="online-game.js"></script>
 </body>
 </html>

@@ -25,9 +25,9 @@ const I18N = {
         suspicionMode: "SUSPICION",
         competitionMode: "COMPETITION",
         roundsDifficulty: "ROUNDS (DIFFICULTY)",
-        easy: "8 (EASY)",
-        normal: "10 (NORMAL)",
-        hard: "7 (HARD)",
+        easy: "10 (EASY)",
+        normal: "8 (NORMAL)",
+        hard: "6 (HARD)",
         cancel: "CANCEL",
         create: "CREATE",
         joinTitle: "ENTER ROOM CODE",
@@ -36,6 +36,8 @@ const I18N = {
         roomCodeLabel: "ROOM CODE:",
         copyInviteLink: "📋 COPY INVITE LINK",
         connectedPlayers: "CONNECTED PRISONERS",
+        playersHere: "PLAYERS HERE",
+        viewPlayers: "VIEW PLAYERS",
         settings: "SETTINGS",
         launchExp: "LAUNCH EXPERIMENT",
         waitingHost: "Waiting for the host to launch the game...",
@@ -47,6 +49,9 @@ const I18N = {
         myControls: "MY CONTROLS",
         action1: "ACTION 1",
         action2: "ACTION 2",
+        clearAction1: "Clear action 1",
+        clearAction2: "Clear action 2",
+        selectSlotToReplace: "Choose an action slot before replacing a programmed action.",
         lockInBtn: "LOCK IN SECRET ACTIONS",
         actionsLocked: "Actions locked! Waiting for others...",
         resolvingAction: "RESOLVING ACTION",
@@ -63,6 +68,7 @@ const I18N = {
         hoverIntel: "Hover over revealed rooms for data",
         complexLogs: "COMPLEX LOGS",
         returnToLobby: "RETURN TO LOBBY",
+        rematchButton: "REMATCH",
         escaped: "ESCAPED!",
         gameOver: "GAME OVER",
         survivors: "SURVIVORS",
@@ -97,6 +103,38 @@ const I18N = {
         ruleSection3Title: "WINNING CONDITIONS",
         ruleSection3Desc: "Locate Room 25, assemble your survivors inside when it is positioned along an outer border, and trigger Control to eject the chamber into the outside world!",
         roomGuideBtn: "ROOM GUIDE",
+        languageThai: "Switch language to Thai",
+        languageEnglish: "Switch language to English",
+        moreGameControls: "More game controls",
+        soundLabel: "Sound",
+        languagePicker: "Choose language",
+        gameLogShort: "Log",
+        roomGuideShort: "Guide",
+        soundMuted: "Sound muted; activate to unmute",
+        soundEnabled: "Sound on; activate to mute",
+        gameLog: "Open game log",
+        invalidPayload: "The request was invalid. Please try again.",
+        invalidRoomCode: "Enter a valid four-character room code.",
+        roomCodeLength: "Room code must be four characters.",
+        roomNotFound: "Room not found. Check the code and try again.",
+        gameAlreadyStarted: "This game is already in progress.",
+        roomFull: "This room is full (maximum 8 players).",
+        hostOnlyRematch: "Only the host can request a rematch.",
+        rematchInProgress: "A rematch is only available after the game ends.",
+        submittingActions: "Sending actions; waiting for server confirmation.",
+        invalidProgramming: "The server rejected these actions. Choose two valid actions again.",
+        programmingPhaseEnded: "The planning phase ended before the server accepted these actions.",
+        playerUnavailable: "Your player is no longer active in this room.",
+        programmingTimeout: "No server confirmation received. Check your connection, then try again.",
+        connectionLost: "Connection lost. Automatically trying to reconnect.",
+        reconnecting: "Trying to reconnect...",
+        rejoiningRoom: "Rejoining your room...",
+        syncingGameState: "Room found; syncing the game state...",
+        connectionRecovered: "Connection restored. Your room state is current.",
+        reconnectFailed: "Reconnect attempts failed. Check your connection and reload to try again.",
+        sessionUnavailable: "This saved room session is unavailable. Join again with a valid room code or invite link.",
+        hostOnlyStart: "Only the host can start the game.",
+        needOnePlayer: "At least one connected player is required.",
         roomGuideTitle: "ROOM EFFECTS & GAME RESTRICTIONS",
         tabActionRules: "📌 ACTION RULES",
         tabAllRooms: "🌐 ALL ROOMS",
@@ -140,17 +178,18 @@ const I18N = {
         suspicionMode: "จับคนทรยศ (SUSPICION)",
         competitionMode: "เอาชีวิตรอดเดี่ยว (COMPETITION)",
         roundsDifficulty: "จำนวนรอบ (ความยาก)",
-        easy: "8 รอบ (ง่าย)",
-        normal: "10 รอบ (ปกติ)",
-        hard: "7 รอบ (ยาก)",
+        easy: "10 รอบ (ง่าย)",
+        normal: "8 รอบ (ปกติ)",
+        hard: "6 รอบ (ยาก)",
         cancel: "ยกเลิก",
         create: "ยืนยันสร้างห้อง",
         joinTitle: "ใส่รหัสห้อง 4 หลัก",
         joinBtn: "เข้าห้อง",
         lobbyTitle: "ห้องพักรอผู้เข้าแข่งขัน",
         roomCodeLabel: "รหัสห้อง:",
-        copyInviteLink: "📋 คัดลอกลิงก์ชวนเพื่อน",
         connectedPlayers: "ผู้เล่นที่เชื่อมต่อ",
+        playersHere: "ผู้เล่นในห้องนี้",
+        viewPlayers: "ดูรายชื่อผู้เล่น",
         settings: "การตั้งค่า",
         launchExp: "เริ่มเกมเลย!",
         waitingHost: "กำลังรอหัวหน้าห้องเริ่มเกม...",
@@ -162,8 +201,23 @@ const I18N = {
         myControls: "คำสั่งของคุณ",
         action1: "แอ็กชัน 1",
         action2: "แอ็กชัน 2",
+        clearAction1: "ล้างแอ็กชัน 1",
+        clearAction2: "ล้างแอ็กชัน 2",
+        selectSlotToReplace: "เลือกช่องแอ็กชันก่อนเปลี่ยนคำสั่งที่วางไว้",
         lockInBtn: "ล็อคคำสั่งลับทั้ง 2 อย่าง",
         actionsLocked: "ล็อคคำสั่งแล้ว! กำลังรอผู้เล่นอื่น...",
+        submittingActions: "กำลังส่งคำสั่ง รอเซิร์ฟเวอร์ยืนยัน...",
+        invalidProgramming: "เซิร์ฟเวอร์ปฏิเสธคำสั่งนี้ กรุณาเลือกคำสั่งที่ถูกต้อง 2 อย่างใหม่",
+        programmingPhaseEnded: "ช่วงวางแผนจบก่อนที่เซิร์ฟเวอร์จะยืนยันคำสั่ง",
+        playerUnavailable: "ผู้เล่นของคุณไม่อยู่ในห้องนี้แล้ว",
+        programmingTimeout: "ไม่ได้รับการยืนยันจากเซิร์ฟเวอร์ ตรวจการเชื่อมต่อแล้วลองอีกครั้ง",
+        connectionLost: "การเชื่อมต่อขาดหาย ระบบกำลังลองเชื่อมต่อใหม่...",
+        reconnecting: "กำลังลองเชื่อมต่อใหม่...",
+        rejoiningRoom: "กำลังกลับเข้าสู่ห้อง...",
+        syncingGameState: "พบห้องแล้ว กำลังซิงก์สถานะเกม...",
+        connectionRecovered: "เชื่อมต่อแล้ว และได้รับสถานะห้องล่าสุด",
+        reconnectFailed: "เชื่อมต่อใหม่ไม่สำเร็จ ตรวจเครือข่ายแล้วโหลดหน้าอีกครั้ง",
+        sessionUnavailable: "เซสชันห้องนี้ใช้ต่อไม่ได้ กรุณาเข้าห้องด้วยรหัสหรือลิงก์เชิญใหม่",
         resolvingAction: "กำลังดำเนินการคำสั่ง",
         selectShift: "เลือกแถว (แนวนอน) หรือคอลัมน์ (แนวตั้ง) ที่ต้องการเลื่อน",
         rows: "แถวนอน",
@@ -178,6 +232,7 @@ const I18N = {
         hoverIntel: "เลื่อนเมาส์/แตะดูห้องที่เปิดแล้วเพื่ออ่านข้อมูล",
         complexLogs: "บันทึกเหตุการณ์",
         returnToLobby: "กลับไปหน้าล็อบบี้",
+        rematchButton: "เล่นใหม่อีกครั้ง",
         escaped: "หนีรอดสำเร็จ!",
         gameOver: "จบเกม / ล้มเหลว",
         survivors: "ผู้รอดชีวิต",
@@ -212,6 +267,26 @@ const I18N = {
         ruleSection3Title: "เงื่อนไขการชนะ",
         ruleSection3Desc: "ตามหา 'ห้อง 25 (Room 25)' ให้เจอ รวมตัวผู้รอดชีวิตในห้องนั้นเมื่อห้องอยู่ตรงขอบกระดาน แล้วใช้คำสั่ง 'เลื่อนห้อง (Control)' ดันห้อง 25 ออกสู่อิสรภาพ!",
         roomGuideBtn: "คู่มือห้อง & ข้อจำกัด",
+        languageThai: "เปลี่ยนภาษาเป็นไทย",
+        languageEnglish: "เปลี่ยนภาษาเป็นอังกฤษ",
+        moreGameControls: "เมนูควบคุมเกม",
+        soundLabel: "เสียง",
+        languagePicker: "เลือกภาษา",
+        gameLogShort: "บันทึก",
+        roomGuideShort: "คู่มือ",
+        soundMuted: "ปิดเสียงแล้ว; กดเพื่อเปิดเสียง",
+        soundEnabled: "เปิดเสียงแล้ว; กดเพื่อปิดเสียง",
+        gameLog: "เปิดบันทึกเหตุการณ์",
+        invalidPayload: "คำขอไม่ถูกต้อง โปรดลองอีกครั้ง",
+        invalidRoomCode: "กรุณากรอกรหัสห้องที่ถูกต้อง 4 ตัวอักษร",
+        roomCodeLength: "รหัสห้องต้องมี 4 ตัวอักษร",
+        roomNotFound: "ไม่พบห้องนี้ กรุณาตรวจสอบรหัสแล้วลองอีกครั้ง",
+        gameAlreadyStarted: "เกมนี้เริ่มไปแล้ว",
+        roomFull: "ห้องนี้เต็มแล้ว (สูงสุด 8 คน)",
+        hostOnlyRematch: "เฉพาะหัวหน้าห้องเท่านั้นที่เริ่มเล่นใหม่ได้",
+        rematchInProgress: "เริ่มเล่นใหม่ได้หลังเกมจบเท่านั้น",
+        hostOnlyStart: "เฉพาะหัวหน้าห้องเท่านั้นที่เริ่มเกมได้",
+        needOnePlayer: "ต้องมีผู้เล่นที่เชื่อมต่ออย่างน้อย 1 คน",
         roomGuideTitle: "คู่มือเอฟเฟกต์ห้องและข้อจำกัดการเล่น",
         tabActionRules: "📌 ข้อจำกัดแอ็กชัน",
         tabAllRooms: "🌐 ทุกห้อง",
@@ -292,7 +367,7 @@ function getRoomInfo(type) {
 
 function setLanguage(lang) {
     currentLang = lang;
-    localStorage.setItem('room25_lang', lang);
+    try { localStorage.setItem('room25_lang', lang); } catch (e) {}
     applyLocalization();
     const guideModal = document.getElementById('modal-room-guide');
     if (guideModal && !guideModal.classList.contains('hidden')) {
@@ -304,24 +379,43 @@ function setLanguage(lang) {
 }
 
 function applyLocalization() {
-    // Update active flag on switch buttons
     document.querySelectorAll('.lang-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.lang === currentLang);
+        const selected = btn.dataset.lang === currentLang;
+        btn.classList.toggle('active', selected);
+        btn.setAttribute('aria-pressed', String(selected));
     });
 
-    // Update all data-i18n elements
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (I18N[currentLang][key]) {
-            el.textContent = I18N[currentLang][key];
-        }
+        if (I18N[currentLang][key]) el.textContent = I18N[currentLang][key];
     });
 
-    // Update placeholders
+    document.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+        const key = el.getAttribute('data-i18n-aria-label');
+        if (I18N[currentLang][key]) el.setAttribute('aria-label', I18N[currentLang][key]);
+    });
+
     const nameInput = document.getElementById('player-nickname');
     if (nameInput) {
         nameInput.placeholder = currentLang === 'th' ? 'เช่น นักโทษหมายเลข 1' : 'e.g. Prisoner #25';
     }
+
+    if (typeof sfx !== 'undefined') {
+        const soundKey = sfx.muted ? 'soundMuted' : 'soundEnabled';
+        document.querySelectorAll('.sound-toggle-btn').forEach(button => {
+            button.setAttribute('aria-label', I18N[currentLang][soundKey]);
+        });
+    }
+}
+
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 // Local Client State
@@ -329,7 +423,13 @@ let localClient = {
     roomCode: null,
     isHost: false,
     selectedActions: [null, null],
+    selectedActionSlot: 0,
     hasSubmittedProgramming: false,
+    pendingProgrammingSubmission: false,
+    programmingLockCuePlayed: false,
+    connectionRecoveryPending: false,
+    connectionRecoveryInGame: false,
+    connectionWasLost: false,
     selectedSlideType: null,
     selectedSlideIndex: null,
     gameState: null,
@@ -386,29 +486,70 @@ function triggerInsaneMoment(type, messageText) {
     }
 }
 
-function toggleAudio() {
-    const btn = document.getElementById('sound-btn');
-    if (typeof sfx !== 'undefined') {
-        sfx.muted = !sfx.muted;
-        if (btn) {
-            btn.textContent = sfx.muted ? '🔇' : '🔊';
-            btn.classList.toggle('muted', sfx.muted);
-        }
+function triggerTileFlip(row, col) {
+    const tile = document.querySelector(`.room-tile[data-row="${row}"][data-col="${col}"]`);
+    if (tile) {
+        tile.classList.remove('revealing-3d');
+        void tile.offsetWidth;
+        tile.classList.add('revealing-3d');
+        setTimeout(() => tile.classList.remove('revealing-3d'), 600);
     }
+}
+
+function triggerSlideAnimation(slideType, index, direction) {
+    const dir = parseInt(direction);
+    const tiles = document.querySelectorAll(slideType === 'row' 
+        ? `.room-tile[data-row="${index}"]` 
+        : `.room-tile[data-col="${index}"]`
+    );
+    const animClass = slideType === 'row' 
+        ? (dir > 0 ? 'sliding-row-right' : 'sliding-row-left')
+        : (dir > 0 ? 'sliding-col-down' : 'sliding-col-up');
+
+    tiles.forEach(t => {
+        t.classList.add(animClass);
+        setTimeout(() => t.classList.remove(animClass), 500);
+    });
+    if (typeof sfx !== 'undefined') sfx.slide();
+}
+
+function toggleAudio() {
+    if (typeof sfx === 'undefined') return;
+    setSoundMuted(!sfx.muted);
+    applyLocalization();
 }
 
 // ==================== SCREEN NAVIGATION ====================
 function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const target = document.getElementById(id);
-    if (target) target.classList.add('active');
+    if (!target) return;
 
-    // Prevent floating language switcher from overlapping top game HUD
+    const current = document.querySelector('.screen.active');
+    const screenChanged = !current || current.id !== id;
+    if (screenChanged) {
+        document.querySelectorAll('.modal, .turn-overlay, .gameover-overlay').forEach(dialog => {
+            if (!dialog.classList.contains('hidden')) Room25UI.closeDialog(dialog, { restoreFocus: false });
+        });
+    }
+    document.querySelectorAll('.screen').forEach(screen => {
+        const isActive = screen === target;
+        screen.classList.toggle('active', isActive);
+        screen.setAttribute('aria-hidden', String(!isActive));
+    });
+
     const floatingSwitcher = document.querySelector('.lang-switcher');
     if (floatingSwitcher) {
-        floatingSwitcher.style.display = (id === 'screen-game') ? 'none' : 'flex';
+        floatingSwitcher.style.display = (id === 'screen-menu' || id === 'screen-lobby') ? 'flex' : 'none';
     }
     document.body.classList.toggle('in-game', id === 'screen-game');
+    if (id === 'screen-lobby') document.getElementById('online-feedback').classList.add('hidden');
+
+    if (screenChanged) {
+        const heading = [...target.querySelectorAll('h1, h2')].find(element => element.getClientRects().length > 0);
+        const focusTarget = heading || target;
+        if (!focusTarget.hasAttribute('tabindex')) focusTarget.tabIndex = -1;
+        focusTarget.focus({ preventScroll: true });
+    }
 }
 
 function goBack() {
@@ -422,15 +563,26 @@ function goBack() {
 }
 
 function openCreateRoomModal() {
-    document.getElementById('modal-create-room').classList.remove('hidden');
+    const modal = document.getElementById('modal-create-room');
+    clearOnlineFeedback();
+    Room25UI.openDialog(modal, {
+        initialFocus: () => modal.querySelector('.mode-btn'),
+        onEscape: closeModals,
+    });
 }
 
 function openJoinRoomModal() {
-    document.getElementById('modal-join-room').classList.remove('hidden');
+    const modal = document.getElementById('modal-join-room');
+    clearOnlineFeedback();
+    clearJoinRoomFeedback();
+    Room25UI.openDialog(modal, {
+        initialFocus: () => modal.querySelector('#join-room-code'),
+        onEscape: closeModals,
+    });
 }
 
 function closeModals() {
-    document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+    document.querySelectorAll('.modal').forEach(modal => Room25UI.closeDialog(modal));
 }
 
 // ==================== ROOM EFFECTS & RESTRICTIONS GUIDE MODAL ====================
@@ -439,25 +591,33 @@ let currentRoomGuideTab = 'rules';
 function openRoomGuideModal(tab = 'rules') {
     if (typeof sfx !== 'undefined') sfx.click();
     currentRoomGuideTab = tab;
-    document.querySelectorAll('.rg-tab').forEach(b => {
-        b.classList.toggle('active', b.dataset.tab === tab);
+    document.querySelectorAll('.rg-tab').forEach(button => {
+        const selected = button.dataset.tab === tab;
+        button.classList.toggle('active', selected);
+        button.setAttribute('aria-pressed', String(selected));
     });
     renderRoomGuideContent();
     const modal = document.getElementById('modal-room-guide');
-    if (modal) modal.classList.remove('hidden');
+    if (modal) {
+        Room25UI.openDialog(modal, {
+            initialFocus: () => modal.querySelector('.room-guide-close-btn'),
+            onEscape: closeRoomGuideModal,
+        });
+    }
 }
 
 function closeRoomGuideModal() {
     if (typeof sfx !== 'undefined') sfx.click();
-    const modal = document.getElementById('modal-room-guide');
-    if (modal) modal.classList.add('hidden');
+    Room25UI.closeDialog(document.getElementById('modal-room-guide'));
 }
 
 function switchRoomGuideTab(tab) {
     if (typeof sfx !== 'undefined') sfx.click();
     currentRoomGuideTab = tab;
-    document.querySelectorAll('.rg-tab').forEach(b => {
-        b.classList.toggle('active', b.dataset.tab === tab);
+    document.querySelectorAll('.rg-tab').forEach(button => {
+        const selected = button.dataset.tab === tab;
+        button.classList.toggle('active', selected);
+        button.setAttribute('aria-pressed', String(selected));
     });
     renderRoomGuideContent();
 }
@@ -561,32 +721,104 @@ function renderRoomGuideContent() {
     body.innerHTML = cardsHtml;
 }
 
-window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        closeRoomGuideModal();
-    }
-});
 
 // Modal selectors
 let modalSelectedMode = 'cooperative';
-let modalSelectedDiff = 10;
+let modalSelectedDiff = 8;
 
 function selectModalMode(btn) {
-    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    document.querySelectorAll('.mode-btn').forEach(button => {
+        const selected = button === btn;
+        button.classList.toggle('active', selected);
+        button.setAttribute('aria-pressed', String(selected));
+    });
     modalSelectedMode = btn.dataset.mode;
 }
 
 function selectModalDiff(btn) {
-    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    modalSelectedDiff = parseInt(btn.dataset.diff);
+    document.querySelectorAll('.diff-btn').forEach(button => {
+        const selected = button === btn;
+        button.classList.toggle('active', selected);
+        button.setAttribute('aria-pressed', String(selected));
+    });
+    modalSelectedDiff = parseInt(btn.dataset.diff, 10);
 }
 
 // ==================== SOCKET CONNECTION & LOBBY ====================
+const SESSION_KEY = 'room25_session';
+
+function getStoredSession() {
+    try {
+        const raw = sessionStorage.getItem(SESSION_KEY);
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (data && typeof data === 'object' && data.roomCode && data.sessionToken) {
+            return data;
+        }
+    } catch (e) {}
+    return null;
+}
+
+function saveSession(data) {
+    if (!data || typeof data !== 'object') return;
+    const token = data.sessionToken || data.token;
+    const code = data.roomCode;
+    if (token && code) {
+        try {
+            sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+                roomCode: code.toUpperCase().trim(),
+                sessionToken: token
+            }));
+        } catch (e) {}
+    }
+}
+
+function clearSession() {
+    try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
+}
+
+socket.on('connect', () => {
+    const session = getStoredSession();
+    if (session && session.roomCode && session.sessionToken) {
+        localClient.connectionRecoveryPending = true;
+        localClient.connectionRecoveryInGame = false;
+        showLocalizedFeedback('rejoiningRoom');
+        const nameInput = document.getElementById('player-nickname');
+        const name = (nameInput && nameInput.value) ? nameInput.value : 'Player';
+        socket.emit('joinRoom', {
+            playerName: name,
+            roomCode: session.roomCode,
+            sessionToken: session.sessionToken
+        });
+    }
+});
+
+socket.on('disconnect', () => {
+    if (!localClient.roomCode && !localClient.gameState && !getStoredSession()) return;
+    localClient.connectionWasLost = true;
+    localClient.connectionRecoveryPending = false;
+    localClient.connectionRecoveryInGame = false;
+    showLocalizedFeedback('connectionLost', 'error');
+});
+
+socket.on('connect_error', () => {
+    if (localClient.connectionWasLost || getStoredSession()) {
+        showLocalizedFeedback('reconnecting', 'status');
+    }
+});
+
+socket.io.on('reconnect_attempt', () => {
+    if (localClient.connectionWasLost) showLocalizedFeedback('reconnecting', 'status');
+});
+
+socket.io.on('reconnect_failed', () => {
+    if (localClient.connectionWasLost) showLocalizedFeedback('reconnectFailed', 'error');
+});
+
 function submitCreateRoom() {
     const name = document.getElementById('player-nickname').value || (currentLang === 'th' ? 'ผู้เล่น 1' : 'Runner 1');
     closeModals();
+    clearSession();
     socket.emit('createRoom', {
         playerName: name,
         mode: modalSelectedMode,
@@ -594,19 +826,149 @@ function submitCreateRoom() {
     });
 }
 
-function submitJoinRoom() {
+let onlineFeedbackGeneration = 0;
+function showOnlineFeedback(message, kind = 'status') {
+    const feedback = document.getElementById('online-feedback');
+    if (!feedback) return;
+    const generation = ++onlineFeedbackGeneration;
+    feedback.textContent = message;
+    delete feedback.dataset.i18n;
+    feedback.dataset.kind = kind;
+    feedback.classList.remove('hidden');
+    if (kind !== 'error') {
+        window.setTimeout(() => {
+            if (generation !== onlineFeedbackGeneration) return;
+            feedback.classList.add('hidden');
+            delete feedback.dataset.kind;
+            delete feedback.dataset.i18n;
+        }, 4500);
+    }
+}
+
+function showLocalizedFeedback(key, kind = 'status') {
+    showOnlineFeedback(t(key), kind);
+    const feedback = document.getElementById('online-feedback');
+    if (feedback) feedback.dataset.i18n = key;
+}
+
+function clearOnlineFeedback() {
+    const feedback = document.getElementById('online-feedback');
+    if (!feedback) return;
+    onlineFeedbackGeneration++;
+    feedback.classList.add('hidden');
+    feedback.textContent = '';
+    delete feedback.dataset.kind;
+    delete feedback.dataset.i18n;
+}
+
+function completeRoomRecovery() {
+    if (!localClient.connectionRecoveryPending) return;
+    localClient.connectionRecoveryPending = false;
+    localClient.connectionRecoveryInGame = false;
+    localClient.connectionWasLost = false;
+    showLocalizedFeedback('connectionRecovered');
+}
+
+function localizeServerError(message) {
+    const keys = {
+        'Invalid request payload': 'invalidPayload',
+        'Invalid room code': 'invalidRoomCode',
+        'Room code must be 4 characters': 'roomCodeLength',
+        'Room not found!': 'roomNotFound',
+        'Session unavailable': 'sessionUnavailable',
+        'Game already in progress!': 'gameAlreadyStarted',
+        'Room is full (max 8 players)!': 'roomFull',
+        'Only the room host can trigger a rematch': 'hostOnlyRematch',
+        'Cannot rematch while game is in progress': 'rematchInProgress',
+        'Only the room host can start the game': 'hostOnlyStart',
+        'Need at least 1 player to test/play!': 'needOnePlayer',
+    };
+    const key = keys[message];
+    return key ? t(key) : message;
+}
+
+function setJoinRoomFeedback(key) {
+    const feedback = document.getElementById('join-room-feedback');
+    const input = document.getElementById('join-room-code');
+    feedback.textContent = t(key);
+    feedback.dataset.i18n = key;
+    feedback.classList.remove('hidden');
+    input.setAttribute('aria-invalid', 'true');
+    input.setAttribute('aria-describedby', 'join-room-feedback');
+    input.focus();
+}
+
+function clearJoinRoomFeedback() {
+    const feedback = document.getElementById('join-room-feedback');
+    const input = document.getElementById('join-room-code');
+    if (!feedback || !input) return;
+    feedback.classList.add('hidden');
+    input.removeAttribute('aria-invalid');
+    input.removeAttribute('aria-describedby');
+    delete feedback.dataset.i18n;
+}
+
+function submitJoinRoom(overrideCode) {
     const name = document.getElementById('player-nickname').value || (currentLang === 'th' ? 'ผู้เล่น' : 'Runner');
-    const code = document.getElementById('join-room-code').value;
-    if (!code) return alert(currentLang === 'th' ? 'กรุณากรอกรหัสห้อง 4 หลัก' : 'Please enter room code');
+    const input = document.getElementById('join-room-code');
+    const code = (overrideCode || input.value || '').toUpperCase().trim();
+    if (code.length !== 4) {
+        setJoinRoomFeedback('roomCodeLength');
+        return;
+    }
+
+    const feedback = document.getElementById('join-room-feedback');
+    feedback.classList.add('hidden');
+    input.removeAttribute('aria-invalid');
+    input.removeAttribute('aria-describedby');
+    document.getElementById('online-feedback').classList.add('hidden');
     closeModals();
+    const session = getStoredSession();
+    const tokenToSend = (session && session.roomCode === code) ? session.sessionToken : null;
     socket.emit('joinRoom', {
         playerName: name,
-        roomCode: code
+        roomCode: code,
+        sessionToken: tokenToSend
     });
 }
 
+function requestRematch() {
+    if (typeof sfx !== 'undefined') sfx.click();
+    socket.emit('rematchRoom');
+}
+
+socket.on('rematchTriggered', () => {
+    localClient.selectedActions = [null, null];
+    localClient.selectedActionSlot = 0;
+    localClient.hasSubmittedProgramming = false;
+    localClient.pendingProgrammingSubmission = false;
+    localClient.programmingLockCuePlayed = false;
+    localClient.selectedSlideType = null;
+    localClient.selectedSlideIndex = null;
+    localClient.gameState = null;
+    localClient.lastRound = 1;
+    updateLockInStatus('actionsLocked', false);
+    const overlay = document.getElementById('gameover-overlay');
+    if (overlay) {
+        Room25UI.closeDialog(overlay, { restoreFocus: false });
+        overlay.classList.remove('active-gameover');
+    }
+    showScreen('screen-lobby');
+});
+
 socket.on('errorMsg', (msg) => {
-    alert(msg);
+    if (localClient.connectionRecoveryPending) {
+        localClient.connectionRecoveryPending = false;
+        localClient.connectionRecoveryInGame = false;
+        localClient.connectionWasLost = false;
+        clearSession();
+        showLocalizedFeedback('sessionUnavailable', 'error');
+        return;
+    }
+    if (msg === 'Room not found!' || msg === 'Game already in progress!') {
+        clearSession();
+    }
+    showOnlineFeedback(localizeServerError(msg), 'error');
 });
 
 socket.on('gameAlert', (data) => {
@@ -617,6 +979,8 @@ socket.on('gameAlert', (data) => {
 socket.on('roomJoined', (data) => {
     localClient.roomCode = data.roomCode;
     localClient.isHost = data.isHost;
+    localClient.connectionRecoveryInGame = Boolean(data.inGame);
+    saveSession({ sessionToken: data.sessionToken, roomCode: data.roomCode });
     document.getElementById('display-room-code').textContent = data.roomCode;
     document.getElementById('lobby-mode-label').textContent = data.mode.toUpperCase();
     document.getElementById('lobby-rounds-label').textContent = data.difficulty;
@@ -631,6 +995,31 @@ socket.on('roomJoined', (data) => {
 
     renderLobbyPlayers(data.players);
     showScreen('screen-lobby');
+    if (localClient.connectionRecoveryPending) {
+        if (localClient.connectionRecoveryInGame) {
+            showLocalizedFeedback('syncingGameState');
+        } else {
+            completeRoomRecovery();
+        }
+    }
+});
+
+// Auto-join check from URL query parameters (e.g. ?room=ABCD)
+window.addEventListener('DOMContentLoaded', () => {
+    applyLocalization();
+    const joinInput = document.getElementById('join-room-code');
+    joinInput.addEventListener('input', () => {
+        clearJoinRoomFeedback();
+        clearOnlineFeedback();
+    });
+    createParticles();
+    const params = new URLSearchParams(window.location.search);
+    const roomParam = params.get('room');
+    if (roomParam && roomParam.length === 4) {
+        const joinInput = document.getElementById('join-room-code');
+        if (joinInput) joinInput.value = roomParam.toUpperCase();
+        openJoinRoomModal();
+    }
 });
 
 socket.on('lobbyUpdate', (data) => {
@@ -656,11 +1045,26 @@ function renderLobbyPlayers(players) {
     players.forEach(p => {
         const div = document.createElement('div');
         div.className = 'lobby-player-badge';
-        div.innerHTML = `
-            <div class="player-color-dot" style="background:${p.color}; width:16px; height:16px;"></div>
-            <span>${p.name}</span>
-            ${p.socketId === socket.id ? `<small style="color:var(--accent-blue); margin-left:auto;">${t('you')}</small>` : ''}
-        `;
+        div.setAttribute('role', 'listitem');
+
+        const dot = document.createElement('div');
+        dot.className = 'player-color-dot';
+        dot.style.background = p.color;
+        dot.style.width = '16px';
+        dot.style.height = '16px';
+        div.appendChild(dot);
+
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = p.name;
+        div.appendChild(nameSpan);
+
+        if (p.socketId === socket.id) {
+            const youSmall = document.createElement('small');
+            youSmall.style.color = 'var(--accent-blue)';
+            youSmall.style.marginLeft = 'auto';
+            youSmall.textContent = t('you');
+            div.appendChild(youSmall);
+        }
         container.appendChild(div);
     });
     document.getElementById('connected-count').textContent = players.length;
@@ -670,26 +1074,27 @@ function requestStartGame() {
     socket.emit('startOnlineGame');
 }
 
-function copyRoomLink() {
+async function copyRoomLink() {
     const url = `${window.location.origin}/?room=${localClient.roomCode}`;
-    navigator.clipboard.writeText(url).then(() => {
-        alert(currentLang === 'th' ? `คัดลอกรหัสห้องแล้ว: ${localClient.roomCode}\nส่งให้เพื่อนเข้าเล่นได้เลย!` : `Room Code copied: ${localClient.roomCode}\nShare with friends to join!`);
-    }).catch(() => {
-        prompt(currentLang === 'th' ? 'รหัสห้อง:' : 'Copy room code:', localClient.roomCode);
-    });
+    try {
+        if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error('Clipboard unavailable');
+        await navigator.clipboard.writeText(url);
+        showOnlineFeedback(
+            currentLang === 'th'
+                ? `คัดลอกลิงก์ชวนเพื่อนแล้ว: ${localClient.roomCode}`
+                : `Invite link copied for room ${localClient.roomCode}.`
+        );
+    } catch (error) {
+        showOnlineFeedback(
+            currentLang === 'th'
+                ? 'คัดลอกอัตโนมัติไม่ได้ ลิงก์เชิญยังคัดลอกได้จากหน้าต่างถัดไป'
+                : 'Automatic copy failed. Copy the invite link from the next dialog.',
+            'error'
+        );
+        prompt(currentLang === 'th' ? 'คัดลอกลิงก์เชิญ:' : 'Copy invite link:', url);
+    }
 }
 
-// Auto join if ?room=ABCD is in query params
-window.addEventListener('DOMContentLoaded', () => {
-    createParticles();
-    applyLocalization();
-    const params = new URLSearchParams(window.location.search);
-    const roomFromUrl = params.get('room');
-    if (roomFromUrl) {
-        document.getElementById('join-room-code').value = roomFromUrl.toUpperCase();
-        openJoinRoomModal();
-    }
-});
 
 function createParticles() {
     const container = document.getElementById('particles');
@@ -705,10 +1110,19 @@ function createParticles() {
         container.appendChild(p);
     }
 }
-
 // ==================== REAL-TIME GAMEPLAY ENGINE ====================
+socket.on('gameStarted', () => {
+    localClient.selectedActions = [null, null];
+    localClient.selectedActionSlot = 0;
+    localClient.hasSubmittedProgramming = false;
+    localClient.pendingProgrammingSubmission = false;
+    localClient.programmingLockCuePlayed = false;
+    localClient.lastRound = 1;
+    updateLockInStatus('actionsLocked', false);
+    showScreen('screen-game');
+});
+
 socket.on('gameStateUpdate', (state) => {
-    // Detect new events / deaths / room25 / complex shifts
     if (localClient.gameState) {
         const prevAlive = localClient.gameState.players.filter(p => p.alive).length;
         const currentAlive = state.players.filter(p => p.alive).length;
@@ -727,13 +1141,24 @@ socket.on('gameStateUpdate', (state) => {
             triggerInsaneMoment('success', currentLang === 'th' ? '🚪 ค้นพบห้อง 25 ทางออกแล้ว!' : '🚪 ROOM 25 THE EXIT HAS BEEN FOUND!');
         }
 
+        // Detect Newly Revealed Tiles & Trigger 3D Flip
+        for (let r = 0; r < 5; r++) {
+            for (let c = 0; c < 5; c++) {
+                const isNowRev = state.board[r][c].revealed;
+                const wasRev = localClient.gameState.board[r][c].revealed;
+                if (isNowRev && !wasRev) {
+                    setTimeout(() => triggerTileFlip(r, c), 50);
+                    if (typeof sfx !== 'undefined') sfx.reveal();
+                }
+            }
+        }
+
         // Detect Complex Slide
         const latestLog = state.logs && state.logs[state.logs.length - 1];
         if (latestLog && latestLog.message.includes('Complex shifted') && (!localClient.lastLogMsg || localClient.lastLogMsg !== latestLog.message)) {
             localClient.lastLogMsg = latestLog.message;
             triggerInsaneMoment('slide', currentLang === 'th' ? '⚙ ห้องกำลังเลื่อนสลับตำแหน่ง!' : '⚙ THE COMPLEX IS SHIFTING!');
         }
-
         // Detect Turn Switch to Me
         const myId = getMyPlayerId(state);
         const wasMyTurn = (localClient.gameState.phase === 'resolution' && localClient.gameState.currentPlayerIndex === myId);
@@ -744,6 +1169,9 @@ socket.on('gameStateUpdate', (state) => {
     }
 
     localClient.gameState = state;
+    if (localClient.connectionRecoveryPending && localClient.connectionRecoveryInGame) {
+        completeRoomRecovery();
+    }
     showScreen('screen-game');
     renderGame(state);
 });
@@ -822,6 +1250,7 @@ function renderPlayerList(state) {
     state.players.forEach((p, idx) => {
         const card = document.createElement('div');
         card.className = 'player-card';
+        card.setAttribute('role', 'listitem');
         card.style.borderLeftColor = p.color;
 
         const isCurrent = (state.phase === 'resolution' && idx === state.currentPlayerIndex);
@@ -853,36 +1282,92 @@ function renderPlayerList(state) {
         }
         actionsHtml += '</div>';
 
-        card.innerHTML = `
-            <div class="pc-name" style="color: ${p.color}">${p.name} ${p.id === myId ? `<small>${t('you')}</small>` : ''}</div>
-            <div class="pc-status">${statusText}</div>
-            ${roleText}
-            ${actionsHtml}
-        `;
+        card.innerHTML = '';
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'pc-name';
+        nameDiv.style.color = p.color;
+        nameDiv.textContent = p.name;
+        if (p.id === myId) {
+            const youSpan = document.createElement('small');
+            youSpan.textContent = ` (${t('you')})`;
+            nameDiv.appendChild(youSpan);
+        }
+        card.appendChild(nameDiv);
+
+        const statusDiv = document.createElement('div');
+        statusDiv.className = 'pc-status';
+        statusDiv.textContent = statusText;
+        card.appendChild(statusDiv);
+
+        if (p.role && p.role !== 'hidden') {
+            const roleDiv = document.createElement('div');
+            roleDiv.className = `pc-role ${p.role}`;
+            roleDiv.textContent = (p.role === 'guard' ? t('guard') : t('prisoner'));
+            card.appendChild(roleDiv);
+        }
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.innerHTML = actionsHtml;
+        if (actionsDiv.firstElementChild) {
+            card.appendChild(actionsDiv.firstElementChild);
+        }
         list.appendChild(card);
     });
 }
 
 function renderBoard(state) {
     const boardEl = document.getElementById('game-board');
-    boardEl.innerHTML = '';
-
+    const activeTile = boardEl.contains(document.activeElement)
+        ? document.activeElement.closest('.room-tile')
+        : null;
+    const activeRow = activeTile ? Number(activeTile.dataset.row) : null;
+    const activeCol = activeTile ? Number(activeTile.dataset.col) : null;
     const myId = getMyPlayerId(state);
-    const isMyTurn = (state.phase === 'resolution' && state.currentPlayerIndex === myId);
-    const waitingInput = state.waitingForInput;
-
-    // Check if client is trapped or frozen or flooded
     const me = state.players.find(p => p.id === myId);
+    const isMyTurn = state.phase === 'resolution' && state.currentPlayerIndex === myId;
+    const waitingInput = state.waitingForInput;
+    const focusRow = activeRow ?? (me ? me.row : 2);
+    const focusCol = activeCol ?? (me ? me.col : 2);
 
-    // Remove existing classes first
+    boardEl.setAttribute('role', 'group');
+    boardEl.setAttribute('aria-label', currentLang === 'th' ? 'กระดานห้อง 5 แถว 5 คอลัมน์' : 'Room board, 5 rows by 5 columns');
+    if (!boardEl.dataset.keyboardNavigation) {
+        boardEl.addEventListener('keydown', event => {
+            const tile = event.target.closest('.room-tile');
+            if (!tile) return;
+
+            const row = Number(tile.dataset.row);
+            const col = Number(tile.dataset.col);
+            const offsets = {
+                ArrowUp: [-1, 0],
+                ArrowDown: [1, 0],
+                ArrowLeft: [0, -1],
+                ArrowRight: [0, 1],
+            };
+
+            if (offsets[event.key]) {
+                const [rowOffset, colOffset] = offsets[event.key];
+                const next = boardEl.querySelector(
+                    `.room-tile[data-row="${row + rowOffset}"][data-col="${col + colOffset}"]`
+                );
+                event.preventDefault();
+                if (next) next.focus();
+            } else if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                tile.click();
+            }
+        });
+        boardEl.dataset.keyboardNavigation = 'true';
+    }
+
     document.body.classList.remove('is-trapped', 'is-frozen', 'is-drowning');
-
     if (me && me.alive) {
         if (me.frozen) document.body.classList.add('is-frozen');
         if (me.trapped) document.body.classList.add('is-trapped');
         if (state.board[me.row][me.col].type === 'flooded') document.body.classList.add('is-drowning');
     }
 
+    boardEl.innerHTML = '';
     for (let r = 0; r < 5; r++) {
         for (let c = 0; c < 5; c++) {
             const cell = state.board[r][c];
@@ -890,38 +1375,38 @@ function renderBoard(state) {
             tile.className = 'room-tile';
             tile.dataset.row = r;
             tile.dataset.col = c;
+            tile.setAttribute('role', 'button');
+            tile.tabIndex = (r === focusRow && c === focusCol) ? 0 : -1;
+
+            const svgArt = (typeof Room25Art !== 'undefined') ? Room25Art.getRoomSvg(cell.type) : '';
+            const hiddenSvgArt = (typeof Room25Art !== 'undefined') ? Room25Art.getRoomSvg('hidden') : '';
 
             if (cell.revealed) {
                 tile.classList.add('revealed');
                 const info = getRoomInfo(cell.type);
                 tile.classList.add('room-' + info.category);
                 tile.innerHTML = `
+                    <div class="room-art-bg" aria-hidden="true">${svgArt}</div>
                     <div class="room-content">
-                        <div class="room-icon">${info.icon}</div>
                         <div class="room-name">${info.name}</div>
                     </div>
                 `;
             } else if (cell.peekedByMe) {
-                // Secret private peek only visible to this client
-                tile.classList.add('peeked-by-me');
                 const info = getRoomInfo(cell.type);
-                tile.classList.add('room-' + info.category);
+                tile.classList.add('peeked-by-me', 'room-' + info.category);
                 tile.innerHTML = `
-                    <div class="room-content" style="opacity:0.85">
-                        <div class="room-icon">${info.icon}</div>
+                    <div class="room-art-bg" aria-hidden="true" style="opacity:0.8">${svgArt}</div>
+                    <div class="room-content" style="opacity:0.95">
                         <div class="room-name">${info.name} ${t('peekedTag')}</div>
                     </div>
                 `;
             } else {
                 tile.classList.add('face-down');
+                tile.innerHTML = `<div class="room-art-bg" aria-hidden="true">${hiddenSvgArt}</div>`;
             }
 
-            // Highlights when it's this client's turn to act
             if (isMyTurn && waitingInput) {
-                const me = state.players.find(p => p.id === myId) || state.players[myId];
-                const myRow = me ? me.row : 2;
-                const myCol = me ? me.col : 2;
-                const isAdj = (Math.abs(myRow - r) + Math.abs(myCol - c)) === 1;
+                const isAdj = me && Math.abs(me.row - r) + Math.abs(me.col - c) === 1;
                 if (waitingInput.type === 'move-tile' && isAdj) {
                     tile.classList.add('highlight-move');
                     tile.onclick = () => sendMoveTile(r, c);
@@ -940,40 +1425,77 @@ function renderBoard(state) {
                 }
             }
 
-            // Occupants
             const here = state.players.filter(p => p.alive && p.row === r && p.col === c);
+            const roomName = cell.revealed || cell.peekedByMe
+                ? getRoomInfo(cell.type).name
+                : t('unexploredRoom');
+            const position = currentLang === 'th'
+                ? `แถวที่ ${r + 1} คอลัมน์ที่ ${c + 1}`
+                : `row ${r + 1}, column ${c + 1}`;
+            const occupants = here.length ? `; ${here.map(p => p.name).join(', ')}` : '';
+            tile.setAttribute('aria-label', `${roomName}, ${position}${occupants}`);
+
             if (here.length > 0) {
+                const isCrowded = here.length > 4;
+                const activeOccupant = isCrowded
+                    ? here.find(p => p.id === state.currentPlayerIndex)
+                    : null;
+                const visiblePlayers = isCrowded
+                    ? [activeOccupant, ...here.filter(p => p !== activeOccupant)].filter(Boolean).slice(0, 3)
+                    : here;
                 const tokensDiv = document.createElement('div');
-                tokensDiv.className = 'player-tokens';
-                here.forEach(p => {
+                tokensDiv.className = isCrowded ? 'player-tokens player-tokens-crowded' : 'player-tokens';
+                tokensDiv.setAttribute('aria-hidden', 'true');
+                visiblePlayers.forEach(p => {
                     const token = document.createElement('div');
                     token.className = 'player-token';
                     if (state.phase === 'resolution' && p.id === state.currentPlayerIndex) {
                         token.classList.add('active-token');
                     }
-                    token.style.background = p.color;
-                    token.textContent = p.name[0];
+                    token.style.setProperty('--token-color', p.color);
+                    const charIndex = p.id % (typeof Room25Art !== 'undefined' ? Room25Art.CHARACTERS.length : 6);
+                    const charData = (typeof Room25Art !== 'undefined') ? Room25Art.CHARACTERS[charIndex] : null;
+                    if (charData && charData.avatarSvg) {
+                        token.innerHTML = `<div class="token-svg-wrap">${charData.avatarSvg}</div>`;
+                    } else {
+                        token.style.background = p.color;
+                        token.textContent = p.name[0];
+                    }
+                    token.title = p.name;
                     tokensDiv.appendChild(token);
                 });
+                if (isCrowded) {
+                    const overflow = document.createElement('span');
+                    overflow.className = 'player-token-overflow';
+                    overflow.textContent = `+${here.length - visiblePlayers.length}`;
+                    overflow.setAttribute('aria-hidden', 'true');
+                    tokensDiv.appendChild(overflow);
+                }
                 tile.appendChild(tokensDiv);
             }
 
-            // Hover info
-            tile.onmouseenter = () => inspectTile(cell);
+            tile.addEventListener('click', () => inspectTile(cell, here));
+            tile.onmouseenter = () => inspectTile(cell, here);
             tile.onmouseleave = () => clearTileInfo();
-
+            tile.onfocus = () => inspectTile(cell, here);
+            tile.onblur = () => clearTileInfo();
             boardEl.appendChild(tile);
+            if (activeTile && r === activeRow && c === activeCol) {
+                tile.focus({ preventScroll: true });
+            }
+
         }
     }
 }
 
-function inspectTile(cell) {
+function inspectTile(cell, playersHere = []) {
     const infoDiv = document.getElementById('room-info');
     if (!cell.revealed && !cell.peekedByMe) {
         infoDiv.innerHTML = `
             <div class="ri-name" style="color:var(--text-dim)">${t('unexploredRoom')}</div>
             <div class="ri-desc">${t('unexploredDesc')}</div>
         `;
+        appendRoomOccupants(infoDiv, playersHere);
         return;
     }
     const info = getRoomInfo(cell.type);
@@ -982,18 +1504,85 @@ function inspectTile(cell) {
         <div class="ri-type">${info.category.toUpperCase()}</div>
         <div class="ri-desc">${info.desc}</div>
     `;
+    appendRoomOccupants(infoDiv, playersHere);
+}
+
+function appendRoomOccupants(infoDiv, playersHere) {
+    if (!playersHere.length) return;
+
+    const section = document.createElement('div');
+    section.className = 'room-info-occupants';
+    if (playersHere.length > 4) {
+        const button = document.createElement('button');
+        const list = document.createElement('ul');
+        button.type = 'button';
+        button.className = 'room-occupants-toggle';
+        const label = document.createElement('span');
+        label.dataset.i18n = 'viewPlayers';
+        label.textContent = t('viewPlayers');
+        button.append(label, document.createTextNode(` (${playersHere.length})`));
+        button.setAttribute('aria-expanded', 'false');
+        button.setAttribute('aria-controls', 'room-occupant-list');
+        list.id = 'room-occupant-list';
+        list.className = 'room-occupant-list';
+        list.hidden = true;
+        playersHere.forEach(player => {
+            const item = document.createElement('li');
+            item.textContent = player.name;
+            list.appendChild(item);
+        });
+        button.addEventListener('click', () => {
+            const expanded = button.getAttribute('aria-expanded') === 'true';
+            button.setAttribute('aria-expanded', String(!expanded));
+            list.hidden = expanded;
+        });
+        section.append(button, list);
+    } else {
+        const summary = document.createElement('p');
+        summary.className = 'room-occupants-summary';
+        const label = document.createElement('span');
+        label.dataset.i18n = 'playersHere';
+        label.textContent = t('playersHere');
+        summary.append(label, document.createTextNode(`: ${playersHere.map(player => player.name).join(', ')}`));
+        section.appendChild(summary);
+    }
+    infoDiv.appendChild(section);
 }
 
 function clearTileInfo() {
-    document.getElementById('room-info').innerHTML = `<p class="room-info-placeholder">${t('hoverIntel')}</p>`;
+    const infoDiv = document.getElementById('room-info');
+    setTimeout(() => {
+        if (infoDiv.matches(':hover, :focus-within') || document.querySelector('.room-tile:hover, .room-tile:focus')) {
+            return;
+        }
+        infoDiv.innerHTML = `<p class="room-info-placeholder">${t('hoverIntel')}</p>`;
+    }, 400);
 }
 
 // ==================== PROGRAMMING PHASE CONTROLS ====================
+function selectActionSlot(index) {
+    if (localClient.hasSubmittedProgramming || localClient.pendingProgrammingSubmission) return;
+    localClient.selectedActionSlot = index;
+    document.getElementById('online-feedback').classList.add('hidden');
+    if (typeof sfx !== 'undefined') sfx.click();
+    updateProgrammingUI();
+}
+
+function clearActionSlot(index) {
+    if (localClient.hasSubmittedProgramming || localClient.pendingProgrammingSubmission || !localClient.selectedActions[index]) return;
+    localClient.selectedActions[index] = null;
+    localClient.selectedActionSlot = index;
+    if (typeof sfx !== 'undefined') sfx.click();
+    updateProgrammingUI();
+    document.getElementById(`action-slot-${index + 1}`).focus({ preventScroll: true });
+}
+
 function clientSelectAction(actionName) {
-    if (localClient.hasSubmittedProgramming) return;
+    if (localClient.hasSubmittedProgramming || localClient.pendingProgrammingSubmission) return;
 
     const state = localClient.gameState;
-    if (state && state.board) {
+    if (!state || state.phase !== 'programming') return;
+    if (state.board) {
         const myId = getMyPlayerId(state);
         const me = state.players ? state.players.find(p => p.id === myId) : null;
         if (me && state.board[me.row]) {
@@ -1011,22 +1600,30 @@ function clientSelectAction(actionName) {
         }
     }
 
-    if (typeof sfx !== 'undefined') sfx.click();
-
-    if (!localClient.selectedActions[0]) {
-        localClient.selectedActions[0] = actionName;
-    } else if (!localClient.selectedActions[1]) {
-        localClient.selectedActions[1] = actionName;
-    } else {
-        localClient.selectedActions[1] = actionName;
+    let slotIndex = localClient.selectedActionSlot;
+    if (slotIndex === null || slotIndex === undefined) {
+        slotIndex = localClient.selectedActions.indexOf(null);
+    }
+    if (slotIndex < 0) {
+        showOnlineFeedback(t('selectSlotToReplace'), 'error');
+        return;
     }
 
+    if (typeof sfx !== 'undefined') sfx.click();
+    document.getElementById('online-feedback').classList.add('hidden');
+    localClient.selectedActions[slotIndex] = actionName;
+    localClient.selectedActionSlot = localClient.selectedActions.indexOf(null);
+    if (localClient.selectedActionSlot < 0) localClient.selectedActionSlot = null;
     updateProgrammingUI();
 }
 
 function updateActionButtonsAvailability() {
     const state = localClient.gameState;
     if (!state || state.phase !== 'programming') return;
+    const locked = localClient.hasSubmittedProgramming || localClient.pendingProgrammingSubmission;
+    document.querySelectorAll('.action-btn').forEach(button => {
+        button.disabled = locked;
+    });
     const myId = getMyPlayerId(state);
     const me = state.players ? state.players.find(p => p.id === myId) : null;
     if (!me || !state.board || !state.board[me.row]) return;
@@ -1050,7 +1647,7 @@ function updateActionButtonsAvailability() {
             badge.textContent = t('noPushBadge');
             badge.style.display = 'block';
         } else {
-            pushBtn.disabled = localClient.hasSubmittedProgramming;
+            pushBtn.disabled = locked;
             pushBtn.classList.remove('disabled-action', 'restricted-central');
             pushBtn.removeAttribute('title');
             const badge = pushBtn.querySelector('.action-restriction-badge');
@@ -1073,7 +1670,7 @@ function updateActionButtonsAvailability() {
             badge.textContent = t('noPeekBadge');
             badge.style.display = 'block';
         } else {
-            peekBtn.disabled = localClient.hasSubmittedProgramming;
+            peekBtn.disabled = locked;
             peekBtn.classList.remove('disabled-action', 'restricted-dark');
             peekBtn.removeAttribute('title');
             const badge = peekBtn.querySelector('.action-restriction-badge');
@@ -1082,42 +1679,92 @@ function updateActionButtonsAvailability() {
     }
 }
 
+function updateLockInStatus(key, visible) {
+    const status = document.getElementById('lock-in-status');
+    status.dataset.i18n = key;
+    status.dataset.lockState = key;
+    status.textContent = t(key);
+    status.classList.toggle('hidden', !visible);
+}
+
 function updateProgrammingUI() {
-    const s1 = document.getElementById('action-slot-1');
-    const s2 = document.getElementById('action-slot-2');
+    const slots = [
+        document.getElementById('action-slot-1'),
+        document.getElementById('action-slot-2'),
+    ];
     const btn = document.getElementById('confirm-actions-btn');
+    const locked = localClient.hasSubmittedProgramming || localClient.pendingProgrammingSubmission;
 
-    if (localClient.selectedActions[0]) {
-        const name = currentLang === 'th' ? getActionThai(localClient.selectedActions[0]) : localClient.selectedActions[0].toUpperCase();
-        s1.querySelector('.slot-value').textContent = name;
-        s1.classList.add('filled');
-    } else {
-        s1.querySelector('.slot-value').textContent = '—';
-        s1.classList.remove('filled');
-    }
+    slots.forEach((slot, index) => {
+        const action = localClient.selectedActions[index];
+        const selected = localClient.selectedActionSlot === index;
+        const clearButton = slot.closest('.action-slot-group').querySelector('.slot-clear');
+        slot.classList.toggle('selected', selected);
+        slot.setAttribute('aria-pressed', String(selected));
+        slot.disabled = locked;
+        if (action) {
+            const name = currentLang === 'th' ? getActionThai(action) : action.toUpperCase();
+            slot.querySelector('.slot-value').textContent = name;
+            slot.classList.add('filled');
+        } else {
+            slot.querySelector('.slot-value').textContent = '—';
+            slot.classList.remove('filled');
+        }
+        clearButton.classList.toggle('hidden', !action);
+        clearButton.disabled = !action || locked;
+        clearButton.setAttribute('aria-label', t(index === 0 ? 'clearAction1' : 'clearAction2'));
+    });
 
-    if (localClient.selectedActions[1]) {
-        const name = currentLang === 'th' ? getActionThai(localClient.selectedActions[1]) : localClient.selectedActions[1].toUpperCase();
-        s2.querySelector('.slot-value').textContent = name;
-        s2.classList.add('filled');
-    } else {
-        s2.querySelector('.slot-value').textContent = '—';
-        s2.classList.remove('filled');
-    }
-
-    btn.disabled = !(localClient.selectedActions[0] && localClient.selectedActions[1]);
+    btn.disabled = locked || !(localClient.selectedActions[0] && localClient.selectedActions[1]);
     updateActionButtonsAvailability();
 }
 
-function submitMyProgramming() {
-    if (!localClient.selectedActions[0] || !localClient.selectedActions[1]) return;
-    if (typeof sfx !== 'undefined') sfx.lockIn();
-    socket.emit('submitProgramming', {
-        actions: localClient.selectedActions
-    });
+function confirmProgrammingSubmission(actions, fromPending = false, refresh = true) {
+    if (Array.isArray(actions) && actions.length === 2) {
+        localClient.selectedActions = [actions[0], actions[1]];
+    }
+    const shouldPlayCue = fromPending && !localClient.programmingLockCuePlayed;
+    localClient.pendingProgrammingSubmission = false;
     localClient.hasSubmittedProgramming = true;
-    document.getElementById('confirm-actions-btn').disabled = true;
-    document.getElementById('lock-in-status').classList.remove('hidden');
+    localClient.programmingLockCuePlayed = localClient.programmingLockCuePlayed || shouldPlayCue;
+    localClient.selectedActionSlot = null;
+    updateLockInStatus('actionsLocked', true);
+    if (refresh) updateProgrammingUI();
+    if (shouldPlayCue && typeof sfx !== 'undefined') sfx.lockIn();
+}
+
+function rejectProgrammingSubmission(reasonKey) {
+    if (localClient.hasSubmittedProgramming) return;
+    localClient.pendingProgrammingSubmission = false;
+    updateLockInStatus('actionsLocked', false);
+    updateProgrammingUI();
+    showOnlineFeedback(t(reasonKey), 'error');
+    document.getElementById('confirm-actions-btn').focus({ preventScroll: true });
+}
+
+function submitMyProgramming() {
+    if (
+        localClient.hasSubmittedProgramming ||
+        localClient.pendingProgrammingSubmission ||
+        !localClient.selectedActions[0] ||
+        !localClient.selectedActions[1]
+    ) return;
+
+    localClient.pendingProgrammingSubmission = true;
+    updateProgrammingUI();
+    updateLockInStatus('submittingActions', true);
+    document.getElementById('lock-in-status').focus({ preventScroll: true });
+
+    socket.timeout(8000).emit('submitProgramming', {
+        actions: localClient.selectedActions
+    }, (error, response) => {
+        if (!localClient.pendingProgrammingSubmission) return;
+        if (error || !response || !response.accepted) {
+            rejectProgrammingSubmission(error ? 'programmingTimeout' : (response?.reason || 'invalidProgramming'));
+            return;
+        }
+        confirmProgrammingSubmission(null, true);
+    });
 }
 
 // ==================== RESOLUTION CONTROLS ====================
@@ -1131,11 +1778,22 @@ function renderActionCenter(state) {
         if (state.currentRound !== localClient.lastRound) {
             localClient.lastRound = state.currentRound;
             localClient.hasSubmittedProgramming = false;
+            localClient.pendingProgrammingSubmission = false;
+            localClient.programmingLockCuePlayed = false;
             localClient.selectedActions = [null, null];
-            document.getElementById('lock-in-status').classList.add('hidden');
-            updateProgrammingUI();
+            localClient.selectedActionSlot = 0;
+            updateLockInStatus('actionsLocked', false);
         }
-        updateActionButtonsAvailability();
+
+        const selfPlayer = state.players.find(player => player.isSelf);
+        const submittedActions = selfPlayer && selfPlayer.actions;
+        if (Array.isArray(submittedActions) && submittedActions.length === 2 && submittedActions.every(Boolean)) {
+            confirmProgrammingSubmission(submittedActions, localClient.pendingProgrammingSubmission, false);
+        } else if (!localClient.pendingProgrammingSubmission && !localClient.hasSubmittedProgramming) {
+            updateLockInStatus('actionsLocked', false);
+        }
+
+        updateProgrammingUI();
         return;
     }
 
@@ -1213,7 +1871,11 @@ function renderPushTargets(targets) {
     targets.forEach(tItem => {
         const btn = document.createElement('button');
         btn.className = 'target-btn';
-        btn.innerHTML = `<span class="player-color-dot" style="background:${tItem.color}"></span> ${tItem.name}`;
+        const dot = document.createElement('span');
+        dot.className = 'player-color-dot';
+        dot.style.background = tItem.color;
+        btn.appendChild(dot);
+        btn.appendChild(document.createTextNode(' ' + tItem.name));
         btn.onclick = () => {
             if (typeof sfx !== 'undefined') sfx.click();
             socket.emit('playerActionInput', { type: 'pushSelectTarget', targetId: tItem.id });
@@ -1262,8 +1924,22 @@ function clientConfirmSlide(direction) {
 }
 
 // Logs & Overlays
+let gameLogPreviousFocus = null;
 function toggleGameLog() {
-    document.getElementById('game-log').classList.toggle('hidden');
+    const log = document.getElementById('game-log');
+    if (log.classList.contains('hidden')) {
+        gameLogPreviousFocus = document.activeElement;
+        log.classList.remove('hidden');
+        log.querySelector('button').focus({ preventScroll: true });
+    } else {
+        log.classList.add('hidden');
+        const menu = gameLogPreviousFocus?.closest('[data-hud-overflow-menu]');
+        const restoreTarget = menu && !menu.open ? menu.querySelector('summary') : gameLogPreviousFocus;
+        if (restoreTarget && restoreTarget.isConnected) {
+            restoreTarget.focus({ preventScroll: true });
+        }
+        gameLogPreviousFocus = null;
+    }
 }
 
 function renderLogs(logs) {
@@ -1283,6 +1959,10 @@ function renderGameOver(state) {
     const res = state.gameResult;
     if (!modal.classList.contains('active-gameover')) {
         modal.classList.add('active-gameover');
+        Room25UI.openDialog(modal, {
+            initialFocus: () => modal.querySelector('button'),
+            focusFallback: () => document.querySelector('#screen-game'),
+        });
         if (res.victory) {
             triggerInsaneMoment('victory', currentLang === 'th' ? '🎉 ยินดีด้วย! หนีรอดสู่อิสรภาพสำเร็จ!' : '🎉 VICTORY! ALL SURVIVORS ESCAPED!');
             if (typeof sfx !== 'undefined') sfx.victory();

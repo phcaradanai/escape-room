@@ -4,19 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Room 25 Ultimate - Digital Edition</title>
-    <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="public/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Scanline overlay -->
     <div class="scanline-overlay"></div>
 
     <!-- ==================== MAIN MENU SCREEN ==================== -->
-    <div id="screen-menu" class="screen active">
+    <div id="screen-menu" class="screen active" role="main" aria-hidden="false">
         <div class="menu-bg">
             <div class="grid-lines"></div>
             <div class="floating-particles" id="particles"></div>
         </div>
+
+        <button type="button" id="menu-sound-btn" class="sound-toggle-btn menu-sound-toggle"
+                onclick="toggleAudio()" aria-label="Sound on; activate to mute" aria-pressed="false">🔊</button>
+
         <div class="menu-content">
             <div class="logo-container">
                 <div class="logo-glow"></div>
@@ -29,19 +33,19 @@
             </div>
             <div class="menu-buttons">
                 <button class="menu-btn primary" onclick="showScreen('screen-setup')">
-                    <span class="btn-icon">▶</span>
+                    <span class="btn-icon" aria-hidden="true">▶</span>
                     <span class="btn-text">NEW GAME</span>
                 </button>
                 <button class="menu-btn" onclick="showScreen('screen-rules')">
-                    <span class="btn-icon">📖</span>
+                    <span class="btn-icon" aria-hidden="true">📖</span>
                     <span class="btn-text">HOW TO PLAY</span>
                 </button>
                 <button class="menu-btn" onclick="showScreen('screen-credits')">
-                    <span class="btn-icon">★</span>
+                    <span class="btn-icon" aria-hidden="true">★</span>
                     <span class="btn-text">CREDITS</span>
                 </button>
                 <button class="menu-btn secondary" onclick="openRoomGuideModal()">
-                    <span class="btn-icon">📜</span>
+                    <span class="btn-icon" aria-hidden="true">📜</span>
                     <span class="btn-text">ROOM EFFECTS GUIDE</span>
                 </button>
             </div>
@@ -51,27 +55,28 @@
         </div>
     </div>
 
+
     <!-- ==================== GAME SETUP SCREEN ==================== -->
-    <div id="screen-setup" class="screen">
+    <div id="screen-setup" class="screen" role="main" aria-hidden="true">
         <div class="setup-container">
-            <button class="back-btn" onclick="showScreen('screen-menu')">← BACK</button>
+            <button class="back-btn" onclick="showScreen('screen-menu')" aria-label="Back to main menu">← BACK</button>
             <h2 class="setup-title">GAME SETUP</h2>
 
             <div class="setup-section">
                 <h3>GAME MODE</h3>
                 <div class="mode-selector">
-                    <button class="mode-btn active" data-mode="cooperative" onclick="selectMode(this)">
-                        <div class="mode-icon">🤝</div>
+                    <button class="mode-btn active" data-mode="cooperative" aria-pressed="true" onclick="selectMode(this)">
+                        <div class="mode-icon" aria-hidden="true">🤝</div>
                         <div class="mode-name">COOPERATIVE</div>
                         <div class="mode-desc">All players work together to escape</div>
                     </button>
-                    <button class="mode-btn" data-mode="suspicion" onclick="selectMode(this)">
-                        <div class="mode-icon">🕵️</div>
+                    <button class="mode-btn" data-mode="suspicion" aria-pressed="false" onclick="selectMode(this)">
+                        <div class="mode-icon" aria-hidden="true">🕵️</div>
                         <div class="mode-name">SUSPICION</div>
                         <div class="mode-desc">Hidden traitors among the group</div>
                     </button>
-                    <button class="mode-btn" data-mode="competition" onclick="selectMode(this)">
-                        <div class="mode-icon">⚔️</div>
+                    <button class="mode-btn" data-mode="competition" aria-pressed="false" onclick="selectMode(this)">
+                        <div class="mode-icon" aria-hidden="true">⚔️</div>
                         <div class="mode-name">COMPETITION</div>
                         <div class="mode-desc">Every player for themselves</div>
                     </button>
@@ -81,11 +86,11 @@
             <div class="setup-section">
                 <h3>NUMBER OF PLAYERS</h3>
                 <div class="player-count-selector">
-                    <button class="count-btn" onclick="setPlayerCount(2)">2</button>
-                    <button class="count-btn" onclick="setPlayerCount(3)">3</button>
-                    <button class="count-btn active" onclick="setPlayerCount(4)">4</button>
-                    <button class="count-btn" onclick="setPlayerCount(5)">5</button>
-                    <button class="count-btn" onclick="setPlayerCount(6)">6</button>
+                    <button class="count-btn" aria-pressed="false" onclick="setPlayerCount(2)">2</button>
+                    <button class="count-btn" aria-pressed="false" onclick="setPlayerCount(3)">3</button>
+                    <button class="count-btn active" aria-pressed="true" onclick="setPlayerCount(4)">4</button>
+                    <button class="count-btn" aria-pressed="false" onclick="setPlayerCount(5)">5</button>
+                    <button class="count-btn" aria-pressed="false" onclick="setPlayerCount(6)">6</button>
                 </div>
             </div>
 
@@ -99,21 +104,22 @@
             <div class="setup-section">
                 <h3>DIFFICULTY</h3>
                 <div class="difficulty-selector">
-                    <button class="diff-btn" data-diff="8" onclick="selectDifficulty(this)">EASY (8 ROUNDS)</button>
-                    <button class="diff-btn active" data-diff="10" onclick="selectDifficulty(this)">NORMAL (10 ROUNDS)</button>
-                    <button class="diff-btn" data-diff="7" onclick="selectDifficulty(this)">HARD (7 ROUNDS)</button>
+                    <button class="diff-btn" data-diff="10" aria-pressed="false" onclick="selectDifficulty(this)">EASY (10 ROUNDS)</button>
+                    <button class="diff-btn active" data-diff="8" aria-pressed="true" onclick="selectDifficulty(this)">NORMAL (8 ROUNDS)</button>
+                    <button class="diff-btn" data-diff="6" aria-pressed="false" onclick="selectDifficulty(this)">HARD (6 ROUNDS)</button>
                 </div>
             </div>
 
+
             <button class="menu-btn primary start-btn" onclick="startGame()">
-                <span class="btn-icon">⚡</span>
+                <span class="btn-icon" aria-hidden="true">⚡</span>
                 <span class="btn-text">START GAME</span>
             </button>
         </div>
     </div>
 
     <!-- ==================== GAME SCREEN ==================== -->
-    <div id="screen-game" class="screen">
+    <div id="screen-game" class="screen" role="main" aria-hidden="true">
         <!-- Top HUD -->
         <div class="game-hud-top">
             <div class="hud-left">
@@ -129,13 +135,21 @@
                 </div>
             </div>
             <div class="hud-center">
-                <div id="game-message" class="game-message">Welcome to the Complex. Find Room 25 to escape!</div>
+                <div id="game-message" class="game-message" role="status" aria-live="polite">Welcome to the Complex. Find Room 25 to escape!</div>
             </div>
             <div class="hud-right">
-                <button class="hud-btn highlight" id="hud-guide-btn" onclick="openRoomGuideModal()" title="Room Effects & Restrictions">📜 GUIDE</button>
-                <button class="hud-btn" onclick="showScreen('screen-rules')" title="Rules">📖</button>
-                <button class="hud-btn" onclick="toggleGameLog()" title="Game Log">📋</button>
-                <button class="hud-btn" onclick="confirmQuit()" title="Quit">✕</button>
+                <details id="offline-hud-menu" class="hud-overflow-menu" data-hud-overflow-menu open>
+                    <summary class="hud-overflow-trigger" aria-label="More game controls" title="More game controls">
+                        <span aria-hidden="true">☰</span>
+                    </summary>
+                    <div class="hud-overflow-items">
+                        <button class="sound-toggle-btn in-hud" id="hud-sound-btn" onclick="toggleAudio()" title="Toggle Sound" aria-label="Toggle sound"><span data-sound-icon aria-hidden="true">🔊</span><span class="hud-overflow-label">Sound</span></button>
+                        <button class="hud-btn highlight" id="hud-guide-btn" onclick="openRoomGuideModal()" title="Room Effects & Restrictions" aria-label="Open room guide">📜<span class="hud-overflow-label">Guide</span></button>
+                        <button class="hud-btn" onclick="showScreen('screen-rules')" title="Rules" aria-label="Open rules">📖<span class="hud-overflow-label">Rules</span></button>
+                        <button class="hud-btn" onclick="toggleGameLog()" title="Game Log" aria-label="Open game log">📋<span class="hud-overflow-label">Log</span></button>
+                        <button class="hud-btn" id="hud-quit-btn" onclick="confirmQuit()" title="Quit" aria-label="Quit game">✕<span class="hud-overflow-label">Quit</span></button>
+                    </div>
+                </details>
             </div>
         </div>
 
@@ -144,7 +158,7 @@
             <!-- Left Panel - Player Info -->
             <div class="game-panel-left">
                 <div class="panel-header">PRISONERS</div>
-                <div id="player-list" class="player-list">
+                <div id="player-list" class="player-list" role="list" aria-label="Players in the complex">
                     <!-- Generated dynamically -->
                 </div>
             </div>
@@ -167,13 +181,19 @@
                     <!-- Programming phase actions -->
                     <div id="programming-panel" class="programming-panel">
                         <div class="action-slots">
-                            <div class="action-slot" id="action-slot-1">
-                                <span class="slot-label">ACTION 1</span>
-                                <span class="slot-value">—</span>
+                            <div class="action-slot-group">
+                                <button type="button" class="action-slot" id="action-slot-1" aria-pressed="false" onclick="selectActionSlot(0)">
+                                    <span class="slot-label">ACTION 1</span>
+                                    <span class="slot-value">—</span>
+                                </button>
+                                <button type="button" class="slot-clear hidden" onclick="clearActionSlot(0)" aria-label="Clear action 1">×</button>
                             </div>
-                            <div class="action-slot" id="action-slot-2">
-                                <span class="slot-label">ACTION 2</span>
-                                <span class="slot-value">—</span>
+                            <div class="action-slot-group">
+                                <button type="button" class="action-slot" id="action-slot-2" aria-pressed="false" onclick="selectActionSlot(1)">
+                                    <span class="slot-label">ACTION 2</span>
+                                    <span class="slot-value">—</span>
+                                </button>
+                                <button type="button" class="slot-clear hidden" onclick="clearActionSlot(1)" aria-label="Clear action 2">×</button>
                             </div>
                         </div>
                         <div class="action-buttons">
@@ -255,9 +275,8 @@
                 <!-- Room Info -->
                 <div class="room-info-panel">
                     <div class="panel-header">ROOM INFO</div>
-                    <div id="room-info" class="room-info">
+                    <div id="room-info" class="room-info" role="region" aria-label="Room details">
                         <p class="room-info-placeholder">Hover over a room to see details</p>
-                    </div>
                 </div>
                 <!-- Room Guide Quick Access -->
                 <button class="room-guide-quick-btn" onclick="openRoomGuideModal()">
@@ -266,19 +285,20 @@
                 </button>
             </div>
         </div>
+        </div>
 
         <!-- Game Log Overlay -->
-        <div id="game-log" class="game-log hidden">
+        <div id="game-log" class="game-log hidden" role="region" aria-labelledby="game-log-title">
             <div class="log-header">
-                <span>GAME LOG</span>
-                <button onclick="toggleGameLog()">✕</button>
+                <span id="game-log-title">GAME LOG</span>
+                <button onclick="toggleGameLog()" aria-label="Close game log">✕</button>
             </div>
             <div id="log-entries" class="log-entries">
             </div>
         </div>
 
         <!-- Turn Transition Overlay -->
-        <div id="turn-overlay" class="turn-overlay hidden">
+        <div id="turn-overlay" class="turn-overlay hidden" role="dialog" aria-labelledby="turn-overlay-title" aria-describedby="turn-overlay-text">
             <div class="turn-overlay-content">
                 <h2 id="turn-overlay-title"></h2>
                 <p id="turn-overlay-text"></p>
@@ -287,9 +307,9 @@
         </div>
 
         <!-- Peek Modal -->
-        <div id="peek-modal" class="modal hidden">
+        <div id="peek-modal" class="modal hidden" role="dialog" aria-labelledby="peek-modal-title" aria-describedby="peek-room-desc">
             <div class="modal-content peek-modal-content">
-                <h3>ROOM REVEALED</h3>
+                <h3 id="peek-modal-title">ROOM REVEALED</h3>
                 <div id="peek-room-display" class="peek-room-display"></div>
                 <p id="peek-room-desc"></p>
                 <button class="menu-btn" onclick="closePeekModal()">GOT IT</button>
@@ -297,7 +317,7 @@
         </div>
 
         <!-- Game Over Overlay -->
-        <div id="gameover-overlay" class="gameover-overlay hidden">
+        <div id="gameover-overlay" class="gameover-overlay hidden" role="dialog" aria-labelledby="gameover-title">
             <div class="gameover-content">
                 <h1 id="gameover-title"></h1>
                 <p id="gameover-text"></p>
@@ -305,10 +325,21 @@
                 <button class="menu-btn primary" onclick="showScreen('screen-menu')">MAIN MENU</button>
             </div>
         </div>
+        <!-- Quit Confirmation -->
+        <div id="quit-confirm-modal" class="modal hidden" role="dialog" aria-labelledby="quit-confirm-title" aria-describedby="quit-confirm-description" onclick="if(event.target===this) closeQuitConfirmation()">
+            <div class="modal-content quit-confirm-content">
+                <h3 id="quit-confirm-title">LEAVE THIS GAME?</h3>
+                <p id="quit-confirm-description">Return to the main menu? Your current game will end.</p>
+                <div class="modal-actions">
+                    <button class="menu-btn quit-cancel-btn" onclick="closeQuitConfirmation()">STAY</button>
+                    <button class="menu-btn primary" onclick="quitToMenu()">QUIT TO MENU</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- ==================== RULES SCREEN ==================== -->
-    <div id="screen-rules" class="screen">
+    <div id="screen-rules" class="screen" role="main" aria-hidden="true">
         <div class="rules-container">
             <button class="back-btn" onclick="goBack()">← BACK</button>
             <h2 class="rules-title">HOW TO PLAY</h2>
@@ -412,7 +443,7 @@
     </div>
 
     <!-- ==================== CREDITS SCREEN ==================== -->
-    <div id="screen-credits" class="screen">
+    <div id="screen-credits" class="screen" role="main" aria-hidden="true">
         <div class="credits-container">
             <button class="back-btn" onclick="showScreen('screen-menu')">← BACK</button>
             <h2 class="credits-title">CREDITS</h2>
@@ -436,24 +467,24 @@
     </div>
 
     <!-- ==================== ROOM EFFECTS & RESTRICTIONS MODAL ==================== -->
-    <div id="modal-room-guide" class="modal hidden" onclick="if(event.target===this) closeRoomGuideModal()">
+    <div id="modal-room-guide" class="modal hidden" role="dialog" aria-labelledby="room-guide-title" onclick="if(event.target===this) closeRoomGuideModal()">
         <div class="modal-content room-guide-modal-content">
             <div class="room-guide-header">
                 <div class="room-guide-title-wrap">
-                    <span class="guide-header-icon">📖</span>
-                    <h2 class="room-guide-title">ROOM EFFECTS & RESTRICTIONS</h2>
+                    <span class="guide-header-icon" aria-hidden="true">📖</span>
+                    <h2 id="room-guide-title" class="room-guide-title">ROOM EFFECTS & RESTRICTIONS</h2>
                 </div>
-                <button class="room-guide-close-btn" onclick="closeRoomGuideModal()" title="Close">✕</button>
+                <button class="room-guide-close-btn" onclick="closeRoomGuideModal()" title="Close" aria-label="Close room guide">✕</button>
             </div>
 
             <!-- Category / Section Filter Tabs -->
             <div class="room-guide-tabs">
-                <button class="rg-tab active" data-tab="rules" onclick="switchRoomGuideTab('rules')">📌 ACTION RULES</button>
-                <button class="rg-tab" data-tab="all" onclick="switchRoomGuideTab('all')">🌐 ALL ROOMS</button>
-                <button class="rg-tab" data-tab="safe" onclick="switchRoomGuideTab('safe')">🟢 SAFE</button>
-                <button class="rg-tab" data-tab="warning" onclick="switchRoomGuideTab('warning')">🟡 WARNING</button>
-                <button class="rg-tab" data-tab="danger" onclick="switchRoomGuideTab('danger')">🔴 DANGER</button>
-                <button class="rg-tab" data-tab="special" onclick="switchRoomGuideTab('special')">🏠🚪 SPECIAL</button>
+                <button class="rg-tab active" data-tab="rules" aria-pressed="true" onclick="switchRoomGuideTab('rules')">📌 ACTION RULES</button>
+                <button class="rg-tab" data-tab="all" aria-pressed="false" onclick="switchRoomGuideTab('all')">🌐 ALL ROOMS</button>
+                <button class="rg-tab" data-tab="safe" aria-pressed="false" onclick="switchRoomGuideTab('safe')">🟢 SAFE</button>
+                <button class="rg-tab" data-tab="warning" aria-pressed="false" onclick="switchRoomGuideTab('warning')">🟡 WARNING</button>
+                <button class="rg-tab" data-tab="danger" aria-pressed="false" onclick="switchRoomGuideTab('danger')">🔴 DANGER</button>
+                <button class="rg-tab" data-tab="special" aria-pressed="false" onclick="switchRoomGuideTab('special')">🏠🚪 SPECIAL</button>
             </div>
 
             <!-- Content Area (Scrollable) -->
@@ -467,12 +498,11 @@
         </div>
     </div>
 
-    <!-- Audio Elements -->
-    <audio id="sfx-click" preload="auto"></audio>
-    <audio id="sfx-reveal" preload="auto"></audio>
-    <audio id="sfx-death" preload="auto"></audio>
-    <audio id="sfx-slide" preload="auto"></audio>
 
+    <script src="public/game-engine.js"></script>
+    <script src="public/game-art.js"></script>
+    <script src="public/sfx.js"></script>
+    <script src="public/ui-accessibility.js"></script>
     <script src="game.js"></script>
 </body>
 </html>
