@@ -41,3 +41,9 @@
 2026-10-08T12:22:40Z INF precheck component="Cloudflare API" details="API is reachable" run_id=c59a8e7a-3081-45cb-805d-569f1999e04c status=pass target=api.cloudflare.com:443
 2026-10-08T12:22:40Z INF precheck complete hard_fail=false run_id=c59a8e7a-3081-45cb-805d-569f1999e04c suggested_protocol=quic
 2026-10-08T12:22:40Z INF Registered tunnel connection connIndex=0 connection=dbdb8031-cd99-42f3-9389-cbf8f16157b1 event=0 ip=198.41.200.33 location=sin22 protocol=quic
+2026-10-08T13:19:47Z INF Initiating graceful shutdown due to signal terminated ...
+2026-10-08T13:19:47Z INF Retrying connection in up to 2s connIndex=0 event=0 ip=198.41.200.33
+2026-10-08T13:19:47Z ERR Connection terminated connIndex=0
+2026-10-08T13:19:47Z ERR no more connections active and exiting
+2026-10-08T13:19:47Z INF Tunnel server stopped
+2026-10-08T13:19:47Z INF Metrics server stopped

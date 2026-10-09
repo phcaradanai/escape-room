@@ -95,7 +95,35 @@ const I18N = {
         ruleSection2Title: "GAMEPLAY LOOP",
         ruleSection2Desc: "1. Programming: Every prisoner secretly locks in 2 actions (Look, Move, Push, Control) on their own device.\n2. Resolution: Actions resolve one-by-one in turn order. Room hazards and traps trigger in real-time.",
         ruleSection3Title: "WINNING CONDITIONS",
-        ruleSection3Desc: "Locate Room 25, assemble your survivors inside when it is positioned along an outer border, and trigger Control to eject the chamber into the outside world!"
+        ruleSection3Desc: "Locate Room 25, assemble your survivors inside when it is positioned along an outer border, and trigger Control to eject the chamber into the outside world!",
+        roomGuideBtn: "ROOM GUIDE",
+        roomGuideTitle: "ROOM EFFECTS & GAME RESTRICTIONS",
+        tabActionRules: "📌 ACTION RULES",
+        tabAllRooms: "🌐 ALL ROOMS",
+        tabSafeRooms: "🟢 SAFE",
+        tabWarningRooms: "🟡 WARNING",
+        tabDangerRooms: "🔴 DANGER",
+        tabSpecialRooms: "🏠🚪 SPECIAL",
+        viewRoomEffects: "View All Room Effects & Restrictions",
+        closeGuide: "UNDERSTOOD (CLOSE)",
+        cannotPushCentral: "Cannot PUSH in Central Room (Safe Zone)!",
+        cannotPeekDark: "Cannot LOOK while inside Dark Room!",
+        noPushBadge: "No Push",
+        noPeekBadge: "No Look",
+        rulePushTitle: "PUSH",
+        rulePush1: "Pushing is strictly prohibited in the Central Room (Starting Chamber) because it is a permanent Safe Zone. The PUSH button is disabled while you are here.",
+        rulePush2: "Another living player must be in your current room. If you are alone, you cannot push anyone.",
+        rulePush3: "Pushes target 1 adjacent chamber (N/S/E/W). If that chamber is face-down, it is revealed immediately and the victim suffers its effects.",
+        rulePeekTitle: "LOOK (PEEK)",
+        rulePeek1: "Looking is impossible while inside a Dark Room due to total lack of visibility.",
+        rulePeek2: "You may only peek at adjacent, face-down chambers (unless using Vision Chamber).",
+        rulePeek3: "Peeked intelligence is private to you alone. Other players will not see the chamber's identity.",
+        ruleControlTitle: "CONTROL (SLIDE)",
+        ruleControl1: "Row 3 (horizontal center) and Column 3 (vertical center) are permanently locked and cannot be shifted due to the fixed Central Room.",
+        ruleControl2: "Other rows and columns wrap around the complex. Any players on shifting rooms move along with them.",
+        ruleMoveTitle: "MOVE",
+        ruleMove1: "Move 1 step into an adjacent chamber.",
+        ruleMove2: "Face-down rooms are revealed immediately upon entry. Lethal hazards (such as Mortal Chamber) eliminate you instantly.",
     },
     th: {
         gameTitle: "ROOM 25",
@@ -182,46 +210,74 @@ const I18N = {
         ruleSection2Title: "ลำดับการเล่นในแต่ละรอบ",
         ruleSection2Desc: "1. เฟสวางแผน (Programming): ทุกคนแอบเลือกคำสั่งลับ 2 แอ็กชันพร้อมกัน\n2. เฟสดำเนินการ (Resolution): ผู้เล่นผลักกัน เดิน เลื่อนห้อง หรือแอบดูตามลำดับเทิร์น กับดักจะทำงานทันทีที่มีคนก้าวเข้าไป",
         ruleSection3Title: "เงื่อนไขการชนะ",
-        ruleSection3Desc: "ตามหา 'ห้อง 25 (Room 25)' ให้เจอ รวมตัวผู้รอดชีวิตในห้องนั้นเมื่อห้องอยู่ตรงขอบกระดาน แล้วใช้คำสั่ง 'เลื่อนห้อง (Control)' ดันห้อง 25 ออกสู่อิสรภาพ!"
+        ruleSection3Desc: "ตามหา 'ห้อง 25 (Room 25)' ให้เจอ รวมตัวผู้รอดชีวิตในห้องนั้นเมื่อห้องอยู่ตรงขอบกระดาน แล้วใช้คำสั่ง 'เลื่อนห้อง (Control)' ดันห้อง 25 ออกสู่อิสรภาพ!",
+        roomGuideBtn: "คู่มือห้อง & ข้อจำกัด",
+        roomGuideTitle: "คู่มือเอฟเฟกต์ห้องและข้อจำกัดการเล่น",
+        tabActionRules: "📌 ข้อจำกัดแอ็กชัน",
+        tabAllRooms: "🌐 ทุกห้อง",
+        tabSafeRooms: "🟢 ปลอดภัย",
+        tabWarningRooms: "🟡 เตือนภัย",
+        tabDangerRooms: "🔴 อันตราย",
+        tabSpecialRooms: "🏠🚪 พิเศษ",
+        viewRoomEffects: "ดูเอฟเฟกต์ & ข้อจำกัดทุกห้อง",
+        closeGuide: "เข้าใจแล้ว (ปิดหน้าต่าง)",
+        cannotPushCentral: "ห้ามผลักในห้อง Central Room (Safe Zone)!",
+        cannotPeekDark: "ห้ามแอบดูเมื่ออยู่ใน Dark Room!",
+        noPushBadge: "ห้ามใน Central",
+        noPeekBadge: "ห้ามใน Dark",
+        rulePushTitle: "ผลัก (PUSH)",
+        rulePush1: "ห้ามผลักในห้องเริ่มต้น (Central Room) เด็ดขาดเนื่องจากเป็น Safe Zone ปลอดภัยสูงสุด (ระบบจะปิดปุ่มผลักทันทีเมื่อคุณอยู่ในห้องนี้)",
+        rulePush2: "ต้องมีผู้เล่นอื่นอยู่ในห้องเดียวกัน หากอยู่คนเดียวจะไม่สามารถผลักใครได้",
+        rulePush3: "ผลักผู้เล่นเป้าหมายไปยังห้องข้างเคียง 1 ช่อง หากห้องนั้นยังคว่ำอยู่จะถูกเปิดหงายทันที และผู้ถูกผลักจะรับผลของห้องนั้น",
+        rulePeekTitle: "แอบดู (PEEK / LOOK)",
+        rulePeek1: "ห้ามแอบดูเมื่อยืนอยู่ในห้องมืด (Dark Room) เนื่องจากมืดสนิทจนมองไม่เห็น",
+        rulePeek2: "แอบดูได้เฉพาะห้องที่อยู่ติดกัน 4 ทิศ (บน, ล่าง, ซ้าย, ขวา) ที่ยังคว่ำอยู่",
+        rulePeek3: "ข้อมูลห้องที่แอบดูจะรู้เฉพาะคุณคนเดียว ผู้เล่นอื่นจะไม่เห็น",
+        ruleControlTitle: "เลื่อนห้อง (CONTROL)",
+        ruleControl1: "ห้ามเลื่อนแถวที่ 3 (แนวนอน) และคอลัมน์ที่ 3 (แนวตั้ง) เนื่องจากมีห้อง Central Room ตรึงไว้ตรงกลาง",
+        ruleControl2: "เลื่อนแถวหรือคอลัมน์อื่นได้อิสระ โดยห้องและคนที่หลุดขอบกระดานจะวนกลับมาฝั่งตรงข้าม",
+        ruleMoveTitle: "เคลื่อนที่ (MOVE)",
+        ruleMove1: "ก้าวเข้าไปยังห้องข้างเคียง 4 ทิศ",
+        ruleMove2: "หากห้องยังไม่เปิด จะถูกหงายทันที และหากมีกับดักมรณะ (เช่น Mortal Chamber) ตัวละครจะตายทันที",
     }
 };
 
 const ROOM_TYPES_DATA = {
     en: {
-        central:     { name: 'Central Room',    icon: '🏠', category: 'central', desc: 'Starting chamber. No aggression allowed.' },
-        room25:      { name: 'Room 25',         icon: '🚪', category: 'exit',    desc: 'THE EXIT! Gather survivors and use CONTROL to slide off board!' },
-        empty:       { name: 'Empty Room',      icon: '⬜', category: 'safe',    desc: 'Completely safe. Nothing happens.' },
-        vision:      { name: 'Vision Chamber',  icon: '🔮', category: 'safe',    desc: 'Peek at any hidden room on the entire board secretly.' },
-        moving:      { name: 'Moving Chamber',  icon: '🔄', category: 'safe',    desc: 'Swap this room with any hidden room on the board.' },
-        controlRoom: { name: 'Control Chamber', icon: '🎛️', category: 'safe',    desc: 'Perform a free CONTROL shift immediately.' },
-        vortex:      { name: 'Vortex Room',     icon: '🌀', category: 'warning', desc: 'Immediately transports occupant back to Central Room!' },
-        freezer:     { name: 'Freezer Room',    icon: '🧊', category: 'warning', desc: 'Frozen chamber! Disables next planned action.' },
-        dark:        { name: 'Dark Room',       icon: '🌑', category: 'warning', desc: 'Vision obscured. LOOK action is impossible from here.' },
-        mortal:      { name: 'Mortal Chamber',  icon: '💀', category: 'danger',  desc: 'INSTANT DEATH TRAP! All who enter are incinerated.' },
-        trapped:     { name: 'Trapped Room',    icon: '⚠️', category: 'danger',  desc: 'Trapdoor activated! Escape on next turn or die.' },
-        acid:        { name: 'Acid Bath',       icon: '☣️', category: 'danger',  desc: 'Lethal chemicals! If a second person enters, one is destroyed.' },
-        flooded:     { name: 'Flooded Room',    icon: '🌊', category: 'danger',  desc: 'Drown if you stay here at the end of the round.' },
-        twins:       { name: 'Twin Room',       icon: '👥', category: 'warning', desc: 'Transports you to the other Twin Room.' },
-        illusion:    { name: 'Illusion Room',   icon: '✨', category: 'warning', desc: 'Secretly shifts its position until revealed.' },
-        hidden:      { name: 'Unexplored Room', icon: '❓', category: 'hidden',  desc: 'Room unknown. Use LOOK to safely inspect it.' }
+        central:     { name: 'Central Room',    icon: '🏠', category: 'central', desc: 'Starting chamber. No aggression allowed.', restriction: '🚫 No PUSH allowed (Safe Zone)' },
+        room25:      { name: 'Room 25',         icon: '🚪', category: 'exit',    desc: 'THE EXIT! Gather survivors and use CONTROL to slide off board!', restriction: '🏁 Escape Room (Must slide from edge)' },
+        empty:       { name: 'Empty Room',      icon: '⬜', category: 'safe',    desc: 'Completely safe. Nothing happens.', restriction: '✅ Safe room' },
+        vision:      { name: 'Vision Chamber',  icon: '🔮', category: 'safe',    desc: 'Peek at any hidden room on the entire board secretly.', restriction: '🔮 Secretly peek ANY room on board' },
+        moving:      { name: 'Moving Chamber',  icon: '🔄', category: 'safe',    desc: 'Swap this room with any hidden room on the board.', restriction: '🔄 Swap with ANY hidden tile' },
+        controlRoom: { name: 'Control Chamber', icon: '🎛️', category: 'safe',    desc: 'Perform a free CONTROL shift immediately.', restriction: '⚙ Free Control action' },
+        vortex:      { name: 'Vortex Room',     icon: '🌀', category: 'warning', desc: 'Immediately transports occupant back to Central Room!', restriction: '🌀 Teleport to Central' },
+        freezer:     { name: 'Freezer Room',    icon: '🧊', category: 'warning', desc: 'Frozen chamber! Disables next planned action.', restriction: '🧊 Lose next action' },
+        dark:        { name: 'Dark Room',       icon: '🌑', category: 'warning', desc: 'Vision obscured. LOOK action is impossible from here.', restriction: '🚫 Cannot LOOK while inside' },
+        mortal:      { name: 'Mortal Chamber',  icon: '💀', category: 'danger',  desc: 'INSTANT DEATH TRAP! All who enter are incinerated.', restriction: '💀 Instant Death upon entry' },
+        trapped:     { name: 'Trapped Room',    icon: '⚠️', category: 'danger',  desc: 'Trapdoor activated! Escape on next turn or die.', restriction: '⚠️ Must leave on next action or die' },
+        acid:        { name: 'Acid Bath',       icon: '☣️', category: 'danger',  desc: 'Lethal chemicals! If a second person enters, one is destroyed.', restriction: '☣️ 2+ players: 1 player dies' },
+        flooded:     { name: 'Flooded Room',    icon: '🌊', category: 'danger',  desc: 'Drown if you stay here at the end of the round.', restriction: '🌊 Drown after 2 rounds' },
+        twins:       { name: 'Twin Room',       icon: '👥', category: 'warning', desc: 'Transports you to the other Twin Room.', restriction: '👥 Teleports to twin chamber' },
+        illusion:    { name: 'Illusion Room',   icon: '✨', category: 'warning', desc: 'Secretly shifts its position until revealed.', restriction: '✨ Shifts position after exit' },
+        hidden:      { name: 'Unexplored Room', icon: '❓', category: 'hidden',  desc: 'Room unknown. Use LOOK to safely inspect it.', restriction: '❓ Unknown hazard' }
     },
     th: {
-        central:     { name: 'ห้องจุดเริ่มต้น (Central)', icon: '🏠', category: 'central', desc: 'ห้องเริ่มเกม ปลอดภัยสูงสุด ห้ามผลักกันในห้องนี้' },
-        room25:      { name: 'ห้อง 25 (ทางออก!)',          icon: '🚪', category: 'exit',    desc: 'ประตูสู่อิสรภาพ! เลื่อนห้องนี้ออกนอกศูนย์วิจัยเพื่อหนี' },
-        empty:       { name: 'ห้องว่างเปล่า (Empty)',      icon: '⬜', category: 'safe',    desc: 'ปลอดภัย ไม่มีอันตรายหรือกับดักใดๆ' },
-        vision:      { name: 'ห้องนิมิต (Vision)',         icon: '🔮', category: 'safe',    desc: 'แอบดูห้องที่ยังคว่ำอยู่ห้องไหนก็ได้ 1 ห้องทั่วกระดาน' },
-        moving:      { name: 'ห้องเคลื่อนย้าย (Moving)',    icon: '🔄', category: 'safe',    desc: 'สลับตำแหน่งห้องนี้กับห้องที่ยังไม่เปิดห้องใดก็ได้' },
-        controlRoom: { name: 'ห้องควบคุมกลไก (Control)',   icon: '🎛️', category: 'safe',    desc: 'ได้สิทธิ์เลื่อนแถวห้อง (Control) ฟรีทันที 1 ครั้ง' },
-        vortex:      { name: 'ห้องพายุหมุน (Vortex)',      icon: '🌀', category: 'warning', desc: 'ถูกดูดพากลับไปที่ห้องจุดเริ่มต้นทันที!' },
-        freezer:     { name: 'ห้องแช่แข็ง (Freezer)',      icon: '🧊', category: 'warning', desc: 'ตัวแข็งชา! จะสูญเสียแอ็กชันถัดไปทันที 1 ครั้ง' },
-        dark:        { name: 'ห้องมืด (Dark Room)',       icon: '🌑', category: 'warning', desc: 'มืดสนิท ไม่สามารถใช้คำสั่งแอบดู (Look) จากห้องนี้ได้' },
-        mortal:      { name: 'ห้องมรณะ (Mortal Chamber)', icon: '💀', category: 'danger',  desc: 'ตายทันที! กับดักสังหารใครที่ก้าวเข้ามาจะถูกกำจัด' },
-        trapped:     { name: 'ห้องประตูกล (Trapped)',      icon: '⚠️', category: 'danger',  desc: 'กับดักนับถอยหลัง! ต้องหนีในเทิร์นหน้า ไม่เช่นนั้นจะตาย' },
-        acid:        { name: 'บ่อกรดมรณะ (Acid Bath)',     icon: '☣️', category: 'danger',  desc: 'กรดพิษ! หากมีคนที่สองเข้ามา คนนั้นจะละลายหายไป' },
-        flooded:     { name: 'ห้องน้ำท่วม (Flooded)',      icon: '🌊', category: 'danger',  desc: 'ห้องน้ำท่วม หากยังอยู่ที่นี่เมื่อจบตาจะจมน้ำตาย' },
-        twins:       { name: 'ห้องภาพลวงฝาแฝด (Twin)',    icon: '👥', category: 'warning', desc: 'พาคุณไปโผล่ที่ห้องแฝดอีกห้องทันที' },
-        illusion:    { name: 'ห้องภาพหลอน (Illusion)',    icon: '✨', category: 'warning', desc: 'เปลี่ยนตำแหน่งไปเรื่อยๆ จนกว่าจะถูกเปิด' },
-        hidden:      { name: 'ห้องปริศนา',                 icon: '❓', category: 'hidden',  desc: 'ยังไม่ได้สำรวจ ใช้คำสั่งแอบดูเพื่อเปิดเผยความลับ' }
+        central:     { name: 'ห้องจุดเริ่มต้น (Central)', icon: '🏠', category: 'central', desc: 'ห้องเริ่มเกม ปลอดภัยสูงสุด ห้ามผลักกันในห้องนี้', restriction: '🚫 ห้ามผลักเด็ดขาด (Safe Zone)' },
+        room25:      { name: 'ห้อง 25 (ทางออก!)',          icon: '🚪', category: 'exit',    desc: 'ประตูสู่อิสรภาพ! เลื่อนห้องนี้ออกนอกศูนย์วิจัยเพื่อหนี', restriction: '🏁 ต้องอยู่ขอบกระดานและสั่ง Control' },
+        empty:       { name: 'ห้องว่างเปล่า (Empty)',      icon: '⬜', category: 'safe',    desc: 'ปลอดภัย ไม่มีอันตรายหรือกับดักใดๆ', restriction: '✅ ปลอดภัย ไม่มีกับดัก' },
+        vision:      { name: 'ห้องนิมิต (Vision)',         icon: '🔮', category: 'safe',    desc: 'แอบดูห้องที่ยังคว่ำอยู่ห้องไหนก็ได้ 1 ห้องทั่วกระดาน', restriction: '🔮 ส่องห้องคว่ำที่ใดก็ได้ทั่วกระดาน' },
+        moving:      { name: 'ห้องเคลื่อนย้าย (Moving)',    icon: '🔄', category: 'safe',    desc: 'สลับตำแหน่งห้องนี้กับห้องที่ยังไม่เปิดห้องใดก็ได้', restriction: '🔄 สลับห้องนี้กับห้องคว่ำที่ใดก็ได้' },
+        controlRoom: { name: 'ห้องควบคุมกลไก (Control)',   icon: '🎛️', category: 'safe',    desc: 'ได้สิทธิ์เลื่อนแถวห้อง (Control) ฟรีทันที 1 ครั้ง', restriction: '⚙ สั่งเลื่อนแถวฟรีทันที 1 ครั้ง' },
+        vortex:      { name: 'ห้องพายุหมุน (Vortex)',      icon: '🌀', category: 'warning', desc: 'ถูกดูดพากลับไปที่ห้องจุดเริ่มต้นทันที!', restriction: '🌀 วาร์ปส่งกลับห้อง Central ทันที' },
+        freezer:     { name: 'ห้องแช่แข็ง (Freezer)',      icon: '🧊', category: 'warning', desc: 'ตัวแข็งชา! จะสูญเสียแอ็กชันถัดไปทันที 1 ครั้ง', restriction: '🧊 เสียแอ็กชันถัดไปทันที 1 แอ็กชัน' },
+        dark:        { name: 'ห้องมืด (Dark Room)',       icon: '🌑', category: 'warning', desc: 'มืดสนิท ไม่สามารถใช้คำสั่งแอบดู (Look) จากห้องนี้ได้', restriction: '🚫 ห้ามแอบดูเมื่ออยู่ในห้องนี้' },
+        mortal:      { name: 'ห้องมรณะ (Mortal Chamber)', icon: '💀', category: 'danger',  desc: 'ตายทันที! กับดักสังหารใครที่ก้าวเข้ามาจะถูกกำจัด', restriction: '💀 ตายทันทีที่ก้าวเข้ามา' },
+        trapped:     { name: 'ห้องประตูกล (Trapped)',      icon: '⚠️', category: 'danger',  desc: 'กับดักนับถอยหลัง! ต้องหนีในเทิร์นหน้า ไม่เช่นนั้นจะตาย', restriction: '⚠️ ต้องออกจากห้องในเทิร์นถัดไปไม่งั้นตาย' },
+        acid:        { name: 'บ่อกรดมรณะ (Acid Bath)',     icon: '☣️', category: 'danger',  desc: 'กรดพิษ! หากมีคนที่สองเข้ามา คนนั้นจะละลายหายไป', restriction: '☣️ หากมี 2 คน คนที่สองจะตาย' },
+        flooded:     { name: 'ห้องน้ำท่วม (Flooded)',      icon: '🌊', category: 'danger',  desc: 'ห้องน้ำท่วม หากยังอยู่ที่นี่เมื่อจบตาจะจมน้ำตาย', restriction: '🌊 จมน้ำตายหากอยู่ครบ 2 เทิร์น' },
+        twins:       { name: 'ห้องภาพลวงฝาแฝด (Twin)',    icon: '👥', category: 'warning', desc: 'พาคุณไปโผล่ที่ห้องแฝดอีกห้องทันที', restriction: '👥 วาร์ปไปห้องแฝดอีกห้อง' },
+        illusion:    { name: 'ห้องภาพหลอน (Illusion)',    icon: '✨', category: 'warning', desc: 'เปลี่ยนตำแหน่งไปเรื่อยๆ จนกว่าจะถูกเปิด', restriction: '✨ สลับตำแหน่งเมื่อผู้เล่นเดินออก' },
+        hidden:      { name: 'ห้องปริศนา',                 icon: '❓', category: 'hidden',  desc: 'ยังไม่ได้สำรวจ ใช้คำสั่งแอบดูเพื่อเปิดเผยความลับ', restriction: '❓ ยังไม่ทราบอันตราย' }
     }
 };
 
@@ -238,6 +294,10 @@ function setLanguage(lang) {
     currentLang = lang;
     localStorage.setItem('room25_lang', lang);
     applyLocalization();
+    const guideModal = document.getElementById('modal-room-guide');
+    if (guideModal && !guideModal.classList.contains('hidden')) {
+        renderRoomGuideContent();
+    }
     if (localClient.gameState) {
         renderGame(localClient.gameState);
     }
@@ -342,6 +402,13 @@ function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const target = document.getElementById(id);
     if (target) target.classList.add('active');
+
+    // Prevent floating language switcher from overlapping top game HUD
+    const floatingSwitcher = document.querySelector('.lang-switcher');
+    if (floatingSwitcher) {
+        floatingSwitcher.style.display = (id === 'screen-game') ? 'none' : 'flex';
+    }
+    document.body.classList.toggle('in-game', id === 'screen-game');
 }
 
 function goBack() {
@@ -365,6 +432,140 @@ function openJoinRoomModal() {
 function closeModals() {
     document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
 }
+
+// ==================== ROOM EFFECTS & RESTRICTIONS GUIDE MODAL ====================
+let currentRoomGuideTab = 'rules';
+
+function openRoomGuideModal(tab = 'rules') {
+    if (typeof sfx !== 'undefined') sfx.click();
+    currentRoomGuideTab = tab;
+    document.querySelectorAll('.rg-tab').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tab);
+    });
+    renderRoomGuideContent();
+    const modal = document.getElementById('modal-room-guide');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeRoomGuideModal() {
+    if (typeof sfx !== 'undefined') sfx.click();
+    const modal = document.getElementById('modal-room-guide');
+    if (modal) modal.classList.add('hidden');
+}
+
+function switchRoomGuideTab(tab) {
+    if (typeof sfx !== 'undefined') sfx.click();
+    currentRoomGuideTab = tab;
+    document.querySelectorAll('.rg-tab').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tab);
+    });
+    renderRoomGuideContent();
+}
+
+function renderRoomGuideContent() {
+    const body = document.getElementById('room-guide-body');
+    if (!body) return;
+
+    if (currentRoomGuideTab === 'rules') {
+        body.innerHTML = `
+            <div class="rg-rules-container">
+                <div class="rg-rule-card highlight-warning">
+                    <div class="rg-rule-card-header">
+                        <span class="rg-rule-action-icon">👊</span>
+                        <span class="rg-rule-action-title">${t('rulePushTitle')}</span>
+                        <span class="rg-rule-badge-prohibited">${currentLang === 'th' ? 'ห้ามใน Central' : 'Restricted in Central'}</span>
+                    </div>
+                    <ul class="rg-rule-list">
+                        <li><strong>${currentLang === 'th' ? 'ข้อห้ามสำคัญ:' : 'Critical Rule:'}</strong> ${t('rulePush1')}</li>
+                        <li>${t('rulePush2')}</li>
+                        <li>${t('rulePush3')}</li>
+                    </ul>
+                </div>
+
+                <div class="rg-rule-card">
+                    <div class="rg-rule-card-header">
+                        <span class="rg-rule-action-icon">👁</span>
+                        <span class="rg-rule-action-title">${t('rulePeekTitle')}</span>
+                        <span class="rg-rule-badge-prohibited" style="border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,0.15);">${currentLang === 'th' ? 'ห้ามใน Dark' : 'Restricted in Dark'}</span>
+                    </div>
+                    <ul class="rg-rule-list">
+                        <li><strong>${currentLang === 'th' ? 'ข้อห้ามสำคัญ:' : 'Critical Rule:'}</strong> ${t('rulePeek1')}</li>
+                        <li>${t('rulePeek2')}</li>
+                        <li>${t('rulePeek3')}</li>
+                    </ul>
+                </div>
+
+                <div class="rg-rule-card">
+                    <div class="rg-rule-card-header">
+                        <span class="rg-rule-action-icon">⚙</span>
+                        <span class="rg-rule-action-title">${t('ruleControlTitle')}</span>
+                    </div>
+                    <ul class="rg-rule-list">
+                        <li><strong>${currentLang === 'th' ? 'ข้อจำกัดแถว:' : 'Row/Column Lock:'}</strong> ${t('ruleControl1')}</li>
+                        <li>${t('ruleControl2')}</li>
+                    </ul>
+                </div>
+
+                <div class="rg-rule-card">
+                    <div class="rg-rule-card-header">
+                        <span class="rg-rule-action-icon">🏃</span>
+                        <span class="rg-rule-action-title">${t('ruleMoveTitle')}</span>
+                    </div>
+                    <ul class="rg-rule-list">
+                        <li>${t('ruleMove1')}</li>
+                        <li>${t('ruleMove2')}</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    // Room Cards Tab
+    const dict = ROOM_TYPES_DATA[currentLang] || ROOM_TYPES_DATA['en'];
+    const keys = Object.keys(dict).filter(k => k !== 'hidden');
+
+    let filteredKeys = keys;
+    if (currentRoomGuideTab === 'safe') {
+        filteredKeys = keys.filter(k => dict[k].category === 'safe');
+    } else if (currentRoomGuideTab === 'warning') {
+        filteredKeys = keys.filter(k => dict[k].category === 'warning');
+    } else if (currentRoomGuideTab === 'danger') {
+        filteredKeys = keys.filter(k => dict[k].category === 'danger');
+    } else if (currentRoomGuideTab === 'special') {
+        filteredKeys = keys.filter(k => dict[k].category === 'central' || dict[k].category === 'exit');
+    }
+
+    let cardsHtml = '<div class="rg-room-grid">';
+    filteredKeys.forEach(k => {
+        const item = dict[k];
+        const cat = item.category;
+        const catLabel = cat.toUpperCase();
+        const isProhibited = item.restriction && item.restriction.includes('ห้าม');
+        cardsHtml += `
+            <div class="rg-room-card cat-${cat}">
+                <div class="rg-card-top">
+                    <div class="rg-card-identity">
+                        <span class="rg-card-icon">${item.icon}</span>
+                        <span class="rg-card-name">${item.name}</span>
+                    </div>
+                    <span class="rg-category-badge ${cat}">${catLabel}</span>
+                </div>
+                ${item.restriction ? `<div class="rg-restriction-callout ${isProhibited ? 'prohibited' : ''}">⚡ ${item.restriction}</div>` : ''}
+                <div class="rg-card-desc">${item.desc}</div>
+            </div>
+        `;
+    });
+    cardsHtml += '</div>';
+
+    body.innerHTML = cardsHtml;
+}
+
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeRoomGuideModal();
+    }
+});
 
 // Modal selectors
 let modalSelectedMode = 'cooperative';
@@ -406,6 +607,11 @@ function submitJoinRoom() {
 
 socket.on('errorMsg', (msg) => {
     alert(msg);
+});
+
+socket.on('gameAlert', (data) => {
+    triggerInsaneMoment(data.type || 'danger', data.message);
+    if (typeof sfx !== 'undefined' && sfx.error) sfx.error();
 });
 
 socket.on('roomJoined', (data) => {
@@ -785,6 +991,26 @@ function clearTileInfo() {
 // ==================== PROGRAMMING PHASE CONTROLS ====================
 function clientSelectAction(actionName) {
     if (localClient.hasSubmittedProgramming) return;
+
+    const state = localClient.gameState;
+    if (state && state.board) {
+        const myId = getMyPlayerId(state);
+        const me = state.players ? state.players.find(p => p.id === myId) : null;
+        if (me && state.board[me.row]) {
+            const curTile = state.board[me.row][me.col];
+            if (actionName === 'push' && curTile && curTile.type === 'central') {
+                if (typeof sfx !== 'undefined' && sfx.error) sfx.error();
+                triggerInsaneMoment('danger', t('cannotPushCentral'));
+                return;
+            }
+            if (actionName === 'peek' && curTile && curTile.type === 'dark') {
+                if (typeof sfx !== 'undefined' && sfx.error) sfx.error();
+                triggerInsaneMoment('danger', t('cannotPeekDark'));
+                return;
+            }
+        }
+    }
+
     if (typeof sfx !== 'undefined') sfx.click();
 
     if (!localClient.selectedActions[0]) {
@@ -796,6 +1022,64 @@ function clientSelectAction(actionName) {
     }
 
     updateProgrammingUI();
+}
+
+function updateActionButtonsAvailability() {
+    const state = localClient.gameState;
+    if (!state || state.phase !== 'programming') return;
+    const myId = getMyPlayerId(state);
+    const me = state.players ? state.players.find(p => p.id === myId) : null;
+    if (!me || !state.board || !state.board[me.row]) return;
+
+    const curTile = state.board[me.row][me.col];
+    const inCentral = (curTile && curTile.type === 'central');
+    const inDark = (curTile && curTile.type === 'dark');
+
+    const pushBtn = document.getElementById('btn-action-push');
+    if (pushBtn) {
+        if (inCentral) {
+            pushBtn.disabled = true;
+            pushBtn.classList.add('disabled-action', 'restricted-central');
+            pushBtn.setAttribute('title', t('cannotPushCentral'));
+            let badge = pushBtn.querySelector('.action-restriction-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'action-restriction-badge';
+                pushBtn.appendChild(badge);
+            }
+            badge.textContent = t('noPushBadge');
+            badge.style.display = 'block';
+        } else {
+            pushBtn.disabled = localClient.hasSubmittedProgramming;
+            pushBtn.classList.remove('disabled-action', 'restricted-central');
+            pushBtn.removeAttribute('title');
+            const badge = pushBtn.querySelector('.action-restriction-badge');
+            if (badge) badge.style.display = 'none';
+        }
+    }
+
+    const peekBtn = document.getElementById('btn-action-peek');
+    if (peekBtn) {
+        if (inDark) {
+            peekBtn.disabled = true;
+            peekBtn.classList.add('disabled-action', 'restricted-dark');
+            peekBtn.setAttribute('title', t('cannotPeekDark'));
+            let badge = peekBtn.querySelector('.action-restriction-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'action-restriction-badge';
+                peekBtn.appendChild(badge);
+            }
+            badge.textContent = t('noPeekBadge');
+            badge.style.display = 'block';
+        } else {
+            peekBtn.disabled = localClient.hasSubmittedProgramming;
+            peekBtn.classList.remove('disabled-action', 'restricted-dark');
+            peekBtn.removeAttribute('title');
+            const badge = peekBtn.querySelector('.action-restriction-badge');
+            if (badge) badge.style.display = 'none';
+        }
+    }
 }
 
 function updateProgrammingUI() {
@@ -822,6 +1106,7 @@ function updateProgrammingUI() {
     }
 
     btn.disabled = !(localClient.selectedActions[0] && localClient.selectedActions[1]);
+    updateActionButtonsAvailability();
 }
 
 function submitMyProgramming() {
@@ -850,6 +1135,7 @@ function renderActionCenter(state) {
             document.getElementById('lock-in-status').classList.add('hidden');
             updateProgrammingUI();
         }
+        updateActionButtonsAvailability();
         return;
     }
 

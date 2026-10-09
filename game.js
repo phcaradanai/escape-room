@@ -39,7 +39,7 @@ const ROOM_DECK = [
     'trapped', 'trapped',
     'acid',
     'flooded',
-    'twins',
+    'twins', 'twins',
     'illusion',
     'room25'
 ];
@@ -250,6 +250,12 @@ function buildBoard() {
         shuffleArray(deck);
     }
 
+    // Ensure Twins always appear as a pair if present
+    const twinsCount = deck.filter(t => t === 'twins').length;
+    if (twinsCount === 1) {
+        const emptyIdx = deck.findIndex(t => t === 'empty');
+        if (emptyIdx !== -1) deck[emptyIdx] = 'twins';
+    }
     let deckIdx = 0;
     for (let r = 0; r < 5; r++) {
         for (let c = 0; c < 5; c++) {
@@ -415,10 +421,45 @@ function renderProgrammingPanel() {
     const confirmBtn = document.getElementById('confirm-actions-btn');
     confirmBtn.disabled = !(player.actions[0] && player.actions[1]);
 
-    // Update action buttons
+    // Update action buttons with restriction checks
+    const curTile = (player && gameState.board) ? gameState.board[player.row][player.col] : null;
+    const inCentral = (curTile && curTile.type === 'central');
+    const inDark = (curTile && curTile.type === 'dark');
+
     document.querySelectorAll('.action-btn').forEach(btn => {
         btn.classList.remove('selected');
-        btn.disabled = false;
+        const act = btn.dataset.action;
+        if (act === 'push' && inCentral) {
+            btn.disabled = true;
+            btn.classList.add('disabled-action');
+            btn.title = "Cannot PUSH in Central Room (Safe Zone)";
+            let badge = btn.querySelector('.action-restriction-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'action-restriction-badge';
+                btn.appendChild(badge);
+            }
+            badge.textContent = 'NO PUSH';
+            badge.style.display = 'block';
+        } else if (act === 'peek' && inDark) {
+            btn.disabled = true;
+            btn.classList.add('disabled-action');
+            btn.title = "Cannot LOOK while inside Dark Room";
+            let badge = btn.querySelector('.action-restriction-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'action-restriction-badge';
+                btn.appendChild(badge);
+            }
+            badge.textContent = 'NO LOOK';
+            badge.style.display = 'block';
+        } else {
+            btn.disabled = false;
+            btn.classList.remove('disabled-action');
+            btn.removeAttribute('title');
+            const badge = btn.querySelector('.action-restriction-badge');
+            if (badge) badge.style.display = 'none';
+        }
     });
 }
 
@@ -526,6 +567,17 @@ function clearRoomInfo() {
 
 function selectAction(action) {
     const player = gameState.players[gameState.currentPlayerIndex];
+    const curTile = (player && gameState.board) ? gameState.board[player.row][player.col] : null;
+    if (action === 'push' && curTile && curTile.type === 'central') {
+        addLog(`${player.name} cannot PUSH in Central Room (Safe Zone)!`, 'warning');
+        setMessage(`Cannot PUSH in Central Room (Safe Zone)!`);
+        return;
+    }
+    if (action === 'peek' && curTile && curTile.type === 'dark') {
+        addLog(`${player.name} cannot LOOK while inside Dark Room!`, 'warning');
+        setMessage(`Cannot LOOK while inside Dark Room!`);
+        return;
+    }
 
     if (!player.actions[0]) {
         player.actions[0] = action;
@@ -777,18 +829,29 @@ function onTileClick(row, col) {
         const room = gameState.board[row][col];
         if (room.revealed) return;
 
-        const playerRoom = gameState.board[player.row][player.col];
-        // Swap positions
-        const tempType = playerRoom.type;
-        const tempRevealed = playerRoom.revealed;
-        playerRoom.type = room.type;
-        playerRoom.revealed = room.revealed;
-        room.type = tempType;
-        room.revealed = tempRevealed;
-        // Player moves with their room — actually in the board game, the player stays
-        // and the rooms swap. Let's keep player in place.
+        const oldRow = player.row;
+        const oldCol = player.col;
+        const playerRoom = gameState.board[oldRow][oldCol];
 
-        addLog(`${player.name} used Moving Chamber to swap rooms!`, 'success');
+        // Swap room types and revealed state
+        const targetType = room.type;
+        const targetRevealed = room.revealed;
+
+        room.type = playerRoom.type; // 'moving'
+        room.revealed = playerRoom.revealed; // true (revealed)
+
+        playerRoom.type = targetType;
+        playerRoom.revealed = targetRevealed; // stays false (unrevealed)
+
+        // ALL players in the Moving Chamber travel with it to the new position
+        gameState.players.forEach(p => {
+            if (p.alive && p.row === oldRow && p.col === oldCol) {
+                p.row = row;
+                p.col = col;
+            }
+        });
+
+        addLog(`🔄 ${player.name} and occupants moved with the Moving Chamber to (${row + 1}, ${col + 1})!`, 'success');
         gameState.waitingForInput = null;
         clearHighlights();
         renderBoard();
@@ -857,6 +920,9 @@ function executeMove(player, targetRow, targetCol) {
     clearHighlights();
     gameState.waitingForInput = null;
 
+    const originRow = player.row;
+    const originCol = player.col;
+
     // Move player
     player.row = targetRow;
     player.col = targetCol;
@@ -878,8 +944,9 @@ function executeMove(player, targetRow, targetCol) {
         if (tile) tile.classList.add('room-reveal');
     }
 
-    // Trigger room effect
+    // Trigger room effect and check illusion exit
     setTimeout(() => {
+        checkIllusionExit(originRow, originCol);
         triggerRoomEffect(player, room);
     }, 400);
 }
@@ -889,6 +956,9 @@ function executePush(target, targetRow, targetCol) {
     gameState.waitingForInput = null;
 
     const player = gameState.players[gameState.currentPlayerIndex];
+
+    const originRow = target.row;
+    const originCol = target.col;
 
     // Move target
     target.row = targetRow;
@@ -910,8 +980,9 @@ function executePush(target, targetRow, targetCol) {
         if (tile) tile.classList.add('room-reveal');
     }
 
-    // Trigger effect on pushed player
+    // Trigger effect on pushed player and check illusion exit
     setTimeout(() => {
+        checkIllusionExit(originRow, originCol);
         triggerRoomEffect(target, room);
     }, 400);
 }
@@ -1049,13 +1120,8 @@ function triggerRoomEffect(player, room) {
             break;
 
         case 'flooded':
-            player.floodedTurns = (player.floodedTurns || 0) + 1;
-            if (player.floodedTurns >= 2) {
-                killPlayer(player, 'drowned in the Flooded Room!');
-            } else {
-                addLog(`${player.name} enters the Flooded Room. Stay too long and you'll drown!`, 'warning');
-                advanceToNextAction();
-            }
+            addLog(`🌊 ${player.name} enters the Flooded Room. Stay 2 consecutive rounds and you'll drown!`, 'warning');
+            advanceToNextAction();
             break;
 
         case 'vortex':
@@ -1119,8 +1185,29 @@ function triggerRoomEffect(player, room) {
             break;
 
         case 'twins':
+            let otherTwin = null;
+            for (let r = 0; r < 5; r++) {
+                for (let c = 0; c < 5; c++) {
+                    const cell = gameState.board[r][c];
+                    if (cell.type === 'twins' && (r !== room.row || c !== room.col)) {
+                        otherTwin = cell;
+                    }
+                }
+            }
+            if (otherTwin) {
+                player.row = otherTwin.row;
+                player.col = otherTwin.col;
+                otherTwin.revealed = true;
+                addLog(`👥 ${player.name} entered Twin Room and warped to the other Twin Room at (${otherTwin.row + 1}, ${otherTwin.col + 1})!`, 'warning');
+                renderBoard();
+            } else {
+                addLog(`👥 ${player.name} entered Twin Room.`, 'info');
+            }
+            advanceToNextAction();
+            break;
+
         case 'illusion':
-            addLog(`${player.name} enters the ${info.name}. ${info.desc}`, 'info');
+            addLog(`✨ ${player.name} enters the Illusion Room. It will vanish when everyone leaves!`, 'warning');
             advanceToNextAction();
             break;
 
@@ -1152,6 +1239,40 @@ function handleAcidBath(enteringPlayer, room) {
     }
 }
 
+
+function checkIllusionExit(fromRow, fromCol) {
+    const originRoom = gameState.board[fromRow][fromCol];
+    if (!originRoom || originRoom.type !== 'illusion') return;
+
+    // Check if any alive players remain in this room
+    const remaining = gameState.players.filter(p => p.alive && p.row === fromRow && p.col === fromCol);
+    if (remaining.length > 0) return;
+
+    const hiddenRooms = [];
+    for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+            const cell = gameState.board[r][c];
+            if (!cell.revealed && cell.type !== 'central' && cell.type !== 'room25') {
+                hiddenRooms.push({ r, c });
+            }
+        }
+    }
+
+    if (hiddenRooms.length > 0) {
+        const target = hiddenRooms[Math.floor(Math.random() * hiddenRooms.length)];
+        const targetRoom = gameState.board[target.r][target.c];
+
+        const tempType = targetRoom.type;
+        targetRoom.type = 'illusion';
+        targetRoom.revealed = false;
+
+        originRoom.type = tempType;
+        originRoom.revealed = false;
+
+        addLog(`✨ The Illusion Room vanished after occupants left and shifted with a hidden room!`, 'warning');
+        renderBoard();
+    }
+}
 function killPlayer(player, reason) {
     player.alive = false;
     addLog(`☠ ${player.name} ${reason}`, 'danger');
@@ -1252,8 +1373,22 @@ function endRound() {
     });
 
     // Check trapped — players who didn't leave die
+    // Check flooded & trapped — players who didn't leave
     gameState.players.forEach(p => {
-        if (p.alive && p.trapped) {
+        if (!p.alive) return;
+        const curRoom = gameState.board[p.row][p.col];
+        if (curRoom.type === 'flooded') {
+            p.floodedTurns = (p.floodedTurns || 0) + 1;
+            if (p.floodedTurns >= 2) {
+                killPlayer(p, 'drowned in the Flooded Room!');
+            } else {
+                addLog(`🌊 Water is rising in the Flooded Room! ${p.name} will drown next round!`, 'warning');
+            }
+        } else {
+            p.floodedTurns = 0;
+        }
+
+        if (p.trapped) {
             p.trappedTurns++;
             if (p.trappedTurns >= 2) {
                 killPlayer(p, 'failed to escape the Trapped Room and was executed!');
@@ -1536,6 +1671,152 @@ function confirmQuit() {
         showScreen('screen-menu');
     }
 }
+
+// ==================== ROOM EFFECTS & RESTRICTIONS GUIDE MODAL ====================
+let currentRoomGuideTab = 'rules';
+
+function openRoomGuideModal(tab = 'rules') {
+    currentRoomGuideTab = tab;
+    document.querySelectorAll('.rg-tab').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tab);
+    });
+    renderRoomGuideContent();
+    const modal = document.getElementById('modal-room-guide');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeRoomGuideModal() {
+    const modal = document.getElementById('modal-room-guide');
+    if (modal) modal.classList.add('hidden');
+}
+
+function switchRoomGuideTab(tab) {
+    currentRoomGuideTab = tab;
+    document.querySelectorAll('.rg-tab').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tab);
+    });
+    renderRoomGuideContent();
+}
+
+function renderRoomGuideContent() {
+    const body = document.getElementById('room-guide-body');
+    if (!body) return;
+
+    if (currentRoomGuideTab === 'rules') {
+        body.innerHTML = `
+            <div class="rg-rules-container">
+                <div class="rg-rule-card highlight-warning">
+                    <div class="rg-rule-card-header">
+                        <span class="rg-rule-action-icon">👊</span>
+                        <span class="rg-rule-action-title">PUSH ACTION</span>
+                        <span class="rg-rule-badge-prohibited">RESTRICTED IN CENTRAL</span>
+                    </div>
+                    <ul class="rg-rule-list">
+                        <li><strong>Critical Restriction:</strong> PUSH is strictly forbidden in Central Room (Safe Zone). The PUSH button is disabled while you are in this room.</li>
+                        <li>Must have another prisoner in your room to push them.</li>
+                        <li>Target is pushed into an adjacent chamber (N/S/E/W). If face-down, it is revealed immediately and victim triggers its hazard.</li>
+                    </ul>
+                </div>
+
+                <div class="rg-rule-card">
+                    <div class="rg-rule-card-header">
+                        <span class="rg-rule-action-icon">👁</span>
+                        <span class="rg-rule-action-title">LOOK (PEEK) ACTION</span>
+                        <span class="rg-rule-badge-prohibited" style="border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,0.15);">RESTRICTED IN DARK ROOM</span>
+                    </div>
+                    <ul class="rg-rule-list">
+                        <li><strong>Critical Restriction:</strong> LOOK is impossible while inside Dark Room. Button is disabled.</li>
+                        <li>Inspect 1 adjacent face-down room secretly without moving.</li>
+                    </ul>
+                </div>
+
+                <div class="rg-rule-card">
+                    <div class="rg-rule-card-header">
+                        <span class="rg-rule-action-icon">⚙</span>
+                        <span class="rg-rule-action-title">CONTROL (SLIDE) ACTION</span>
+                    </div>
+                    <ul class="rg-rule-list">
+                        <li><strong>Row/Column Lock:</strong> Row 3 and Column 3 are fixed and cannot be shifted due to the central room.</li>
+                        <li>Shift other rows or columns; rooms wrap around and occupants move with them.</li>
+                    </ul>
+                </div>
+
+                <div class="rg-rule-card">
+                    <div class="rg-rule-card-header">
+                        <span class="rg-rule-action-icon">🏃</span>
+                        <span class="rg-rule-action-title">MOVE ACTION</span>
+                    </div>
+                    <ul class="rg-rule-list">
+                        <li>Step into an adjacent room. Unexplored rooms are revealed immediately.</li>
+                        <li>Hazards trigger upon entry. Entering Mortal Chamber results in instant death!</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    const keys = Object.keys(ROOM_TYPES);
+    let filteredKeys = keys;
+    if (currentRoomGuideTab === 'safe') {
+        filteredKeys = keys.filter(k => ROOM_TYPES[k].category === 'safe');
+    } else if (currentRoomGuideTab === 'warning') {
+        filteredKeys = keys.filter(k => ROOM_TYPES[k].category === 'warning');
+    } else if (currentRoomGuideTab === 'danger') {
+        filteredKeys = keys.filter(k => ROOM_TYPES[k].category === 'danger');
+    } else if (currentRoomGuideTab === 'special') {
+        filteredKeys = keys.filter(k => ROOM_TYPES[k].category === 'central' || ROOM_TYPES[k].category === 'exit');
+    }
+
+    const restrictions = {
+        central: '🚫 No PUSH allowed (Safe Zone)',
+        room25: '🏁 Must slide off edge to escape',
+        empty: '✅ Safe room',
+        vision: '🔮 Unlimited peek anywhere',
+        moving: '🔄 Swap with any hidden tile',
+        controlRoom: '⚙ Free Control action',
+        vortex: '🌀 Teleport to Central',
+        freezer: '🧊 Lose next action',
+        dark: '🚫 Cannot LOOK while inside',
+        mortal: '💀 Instant Death upon entry',
+        trapped: '⚠️ Must leave next turn or die',
+        acid: '☣️ 2+ players: 1 player dies',
+        flooded: '🌊 Drown after 2 rounds',
+        twins: '👥 Teleports to twin chamber',
+        illusion: '✨ Shifts position after exit'
+    };
+
+    let cardsHtml = '<div class="rg-room-grid">';
+    filteredKeys.forEach(k => {
+        const item = ROOM_TYPES[k];
+        const cat = item.category;
+        const catLabel = cat.toUpperCase();
+        const rest = restrictions[k];
+        const isProhibited = rest && rest.includes('No ');
+        cardsHtml += `
+            <div class="rg-room-card cat-${cat}">
+                <div class="rg-card-top">
+                    <div class="rg-card-identity">
+                        <span class="rg-card-icon">${item.icon}</span>
+                        <span class="rg-card-name">${item.name}</span>
+                    </div>
+                    <span class="rg-category-badge ${cat}">${catLabel}</span>
+                </div>
+                ${rest ? `<div class="rg-restriction-callout ${isProhibited ? 'prohibited' : ''}">⚡ ${rest}</div>` : ''}
+                <div class="rg-card-desc">${item.desc}</div>
+            </div>
+        `;
+    });
+    cardsHtml += '</div>';
+
+    body.innerHTML = cardsHtml;
+}
+
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeRoomGuideModal();
+    }
+});
 
 // ==================== UTILITIES ====================
 

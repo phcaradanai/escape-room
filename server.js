@@ -26,7 +26,7 @@ const ROOM_DECK = [
     'trapped', 'trapped',
     'acid',
     'flooded',
-    'twins',
+    'twins', 'twins',
     'illusion',
     'room25'
 ];
@@ -62,6 +62,12 @@ function buildBoard() {
         deck = shuffleArray(deck);
     }
 
+    // Ensure Twins always appear as a pair if present
+    const twinsCount = deck.filter(t => t === 'twins').length;
+    if (twinsCount === 1) {
+        const emptyIdx = deck.findIndex(t => t === 'empty');
+        if (emptyIdx !== -1) deck[emptyIdx] = 'twins';
+    }
     let deckIdx = 0;
     for (let r = 0; r < 5; r++) {
         for (let c = 0; c < 5; c++) {
@@ -98,7 +104,7 @@ function getSanitizedGameState(room, forSocketId) {
     // Deep copy board to mask hidden rooms unless peeked by this player
     const sanitizedBoard = g.board.map(row => row.map(cell => {
         const isRevealed = cell.revealed;
-        const peekedByMe = clientPlayer && clientPlayer.peekedRooms && clientPlayer.peekedRooms.some(pr => pr.r === cell.row && pr.c === cell.col);
+        const peekedByMe = clientPlayer && clientPlayer.peekedRooms && clientPlayer.peekedRooms.some(pr => pr.r === cell.row && (pr.c === cell.col || pr.col === cell.col));
         if (isRevealed || peekedByMe) {
             return {
                 type: cell.type,
@@ -369,9 +375,17 @@ function endRound(room) {
     // Resolve trapped / flooded status
     g.players.forEach(p => {
         if (!p.alive) return;
-        const curRoom = g.board[p.row][p.col];
-        if (curRoom.type !== 'flooded') {
-            p.floodedTurns = 0;
+        if (curRoom.type === 'flooded') {
+            p.floodedRounds = (p.floodedRounds || 0) + 1;
+            if (p.floodedRounds >= 2) {
+                p.alive = false;
+                addRoomLog(room, `🌊 ${p.name} drowned in the Flooded Room after staying 2 consecutive rounds!`, 'danger');
+                checkDeathWinLoss(room);
+            } else {
+                addRoomLog(room, `🌊 Water is rising in the Flooded Room! ${p.name} will drown if they stay another round!`, 'warning');
+            }
+        } else {
+            p.floodedRounds = 0;
         }
         if (p.trapped) {
             p.trappedTurns = (p.trappedTurns || 0) + 1;
@@ -444,14 +458,7 @@ function triggerRoomEffect(room, player, targetRoom, isPushed = false) {
             break;
 
         case 'flooded':
-            player.floodedTurns = (player.floodedTurns || 0) + 1;
-            if (player.floodedTurns >= 2) {
-                player.alive = false;
-                addRoomLog(room, `🌊 ${player.name} drowned in the Flooded Room!`, 'danger');
-                checkDeathWinLoss(room);
-            } else {
-                addRoomLog(room, `🌊 ${player.name} is wading through water. Don't linger here!`, 'warning');
-            }
+            addRoomLog(room, `🌊 ${player.name} waded into the Flooded Room! Escape before round ends or drown!`, 'warning');
             advanceToNextAction(room);
             break;
 
@@ -517,7 +524,7 @@ function triggerRoomEffect(room, player, targetRoom, isPushed = false) {
             for (let r = 0; r < 5; r++) {
                 for (let c = 0; c < 5; c++) {
                     const cell = g.board[r][c];
-                    if (cell.type === 'twins' && (cell.row !== targetRoom.row || cell.col !== targetRoom.col)) {
+                    if (cell.type === 'twins' && (r !== targetRoom.row || c !== targetRoom.col)) {
                         otherTwin = cell;
                     }
                 }
@@ -526,9 +533,9 @@ function triggerRoomEffect(room, player, targetRoom, isPushed = false) {
                 player.row = otherTwin.row;
                 player.col = otherTwin.col;
                 otherTwin.revealed = true;
-                addRoomLog(room, `👥 ${player.name} entered Twin Room and was transported to the other Twin Room!`, 'warning');
+                addRoomLog(room, `👥 ${player.name} entered Twin Room and warped to the other Twin Room at (${otherTwin.row + 1}, ${otherTwin.col + 1})!`, 'warning');
             } else {
-                addRoomLog(room, `👥 ${player.name} entered Twin Room, but the other twin is not found!`, 'warning');
+                addRoomLog(room, `👥 ${player.name} entered Twin Room, but the other twin is not on the board!`, 'warning');
             }
             advanceToNextAction(room);
             break;
@@ -539,26 +546,38 @@ function triggerRoomEffect(room, player, targetRoom, isPushed = false) {
     }
 }
 
-function shiftIllusionRoom(room) {
+function checkIllusionExit(room, fromRow, fromCol) {
     const g = room.game;
-    let illusionPos = null;
-    let hiddenRooms = [];
+    const originRoom = g.board[fromRow][fromCol];
+    if (!originRoom || originRoom.type !== 'illusion') return;
 
+    // Check if any alive players remain in this illusion room
+    const remaining = g.players.filter(p => p.alive && p.row === fromRow && p.col === fromCol);
+    if (remaining.length > 0) return;
+
+    // Find all hidden rooms (not central, not room25)
+    const hiddenRooms = [];
     for (let r = 0; r < 5; r++) {
         for (let c = 0; c < 5; c++) {
-            if (g.board[r][c].type === 'illusion' && !g.board[r][c].revealed) {
-                illusionPos = { r, c };
-            } else if (!g.board[r][c].revealed && g.board[r][c].type !== 'central' && g.board[r][c].type !== 'room25') {
+            const cell = g.board[r][c];
+            if (!cell.revealed && cell.type !== 'central' && cell.type !== 'room25') {
                 hiddenRooms.push({ r, c });
             }
         }
     }
 
-    if (illusionPos && hiddenRooms.length > 0) {
+    if (hiddenRooms.length > 0) {
         const target = hiddenRooms[Math.floor(Math.random() * hiddenRooms.length)];
-        const tempType = g.board[illusionPos.r][illusionPos.c].type;
-        g.board[illusionPos.r][illusionPos.c].type = g.board[target.r][target.c].type;
-        g.board[target.r][target.c].type = tempType;
+        const targetRoom = g.board[target.r][target.c];
+
+        const tempType = targetRoom.type;
+        targetRoom.type = 'illusion';
+        targetRoom.revealed = false;
+
+        originRoom.type = tempType;
+        originRoom.revealed = false;
+
+        addRoomLog(room, `✨ The Illusion Room vanished after occupants left and shifted with a hidden chamber!`, 'warning');
     }
 }
 
@@ -844,6 +863,12 @@ io.on('connection', (socket) => {
         const player = room.game.players.find(p => p.socketId === socket.id);
         if (!player || !player.alive) return;
 
+        const curTile = room.game.board[player.row][player.col];
+        if (curTile && curTile.type === 'central' && actions && actions.includes('push')) {
+            socket.emit('gameAlert', { type: 'danger', message: 'Cannot PUSH while in Central Room!' });
+            return;
+        }
+
         player.actions = actions;
         addRoomLog(room, `${player.name} locked in their actions.`, 'info');
 
@@ -888,6 +913,8 @@ io.on('connection', (socket) => {
         } else if (data.type === 'move') {
             const { row, col } = data;
             if (!isAdjacent(player.row, player.col, row, col)) return;
+            const originRow = player.row;
+            const originCol = player.col;
             player.row = row;
             player.col = col;
             const roomCell = g.board[row][col];
@@ -898,7 +925,7 @@ io.on('connection', (socket) => {
             addRoomLog(room, `${player.name} moved to (${row + 1}, ${col + 1}): ${roomCell.type.toUpperCase()}`, 'info');
             broadcastGameState(room);
             setTimeout(() => {
-                shiftIllusionRoom(room);
+                checkIllusionExit(room, originRow, originCol);
                 triggerRoomEffect(room, player, roomCell);
             }, 800);
         } else if (data.type === 'pushSelectTarget') {
@@ -917,6 +944,8 @@ io.on('connection', (socket) => {
             const target = g.players.find(p => p.id === g.pushTargetId);
             const { row, col } = data;
             if (!target || !isAdjacent(player.row, player.col, row, col)) return;
+            const originRow = target.row;
+            const originCol = target.col;
             target.row = row;
             target.col = col;
             const roomCell = g.board[row][col];
@@ -928,7 +957,7 @@ io.on('connection', (socket) => {
             addRoomLog(room, `${player.name} PUSHED ${target.name} into (${row + 1}, ${col + 1})!`, 'warning');
             broadcastGameState(room);
             setTimeout(() => {
-                shiftIllusionRoom(room);
+                checkIllusionExit(room, originRow, originCol);
                 triggerRoomEffect(room, target, roomCell, true);
             }, 800);
         } else if (data.type === 'slide') {
@@ -954,26 +983,59 @@ io.on('connection', (socket) => {
             const { row, col } = data;
             const targetTile = g.board[row][col];
             if (!player.peekedRooms) player.peekedRooms = [];
-            player.peekedRooms.push({ r: row, c: col });
+            player.peekedRooms.push({ r: row, c: col, col: col });
 
-            addRoomLog(room, `${player.name} used Vision Chamber to peek secretly.`, 'success');
+            addRoomLog(room, `${player.name} used Vision Chamber to peek secretly at (${row + 1}, ${col + 1})!`, 'success');
             g.waitingForInput = null;
             broadcastGameState(room);
             setTimeout(() => advanceToNextAction(room), 1000);
         } else if (data.type === 'movingSwap') {
             const { row, col } = data;
             const targetRoom = g.board[row][col];
-            if (targetRoom.revealed) return;
+            if (!targetRoom || targetRoom.revealed) return;
 
-            const playerRoom = g.board[player.row][player.col];
-            const tempType = playerRoom.type;
-            const tempRevealed = playerRoom.revealed;
-            playerRoom.type = targetRoom.type;
-            playerRoom.revealed = targetRoom.revealed;
-            targetRoom.type = tempType;
-            targetRoom.revealed = tempRevealed;
+            const oldRow = player.row;
+            const oldCol = player.col;
+            const playerRoom = g.board[oldRow][oldCol];
 
-            addRoomLog(room, `🔄 ${player.name} swapped the Moving Chamber with chamber at (${row + 1}, ${col + 1})!`, 'success');
+            // Swap room types and revealed state
+            const targetType = targetRoom.type;
+            const targetRevealed = targetRoom.revealed;
+
+            targetRoom.type = playerRoom.type;
+            targetRoom.revealed = playerRoom.revealed;
+
+            playerRoom.type = targetType;
+            playerRoom.revealed = targetRevealed;
+
+            // Update any peeked rooms tracking if players peeked at this room
+            g.players.forEach(p => {
+                if (p.peekedRooms) {
+                    p.peekedRooms.forEach(pr => {
+                        const rMatch = pr.r;
+                        const cMatch = (pr.c !== undefined) ? pr.c : pr.col;
+                        if (rMatch === row && cMatch === col) {
+                            pr.r = oldRow;
+                            if (pr.c !== undefined) pr.c = oldCol;
+                            if (pr.col !== undefined) pr.col = oldCol;
+                        } else if (rMatch === oldRow && cMatch === oldCol) {
+                            pr.r = row;
+                            if (pr.c !== undefined) pr.c = col;
+                            if (pr.col !== undefined) pr.col = col;
+                        }
+                    });
+                }
+            });
+
+            // ALL players who were in the Moving Chamber travel with it to the new position
+            g.players.forEach(p => {
+                if (p.alive && p.row === oldRow && p.col === oldCol) {
+                    p.row = row;
+                    p.col = col;
+                }
+            });
+
+            addRoomLog(room, `🔄 ${player.name} and occupants moved with the Moving Chamber to (${row + 1}, ${col + 1})!`, 'success');
             g.waitingForInput = null;
             broadcastGameState(room);
             setTimeout(() => advanceToNextAction(room), 1000);

@@ -22,7 +22,7 @@
                 <div class="logo-glow"></div>
                 <h1 class="game-title">
                     <span class="title-room">ROOM</span>
-                    <span class="title-25">25</span>
+                    <!--<span class="title-25">25</span>-->
                 </h1>
                 <h2 class="game-subtitle">ULTIMATE</h2>
                 <div class="title-tagline">ESCAPE OR DIE TRYING</div>
@@ -39,6 +39,10 @@
                 <button class="menu-btn" onclick="showScreen('screen-credits')">
                     <span class="btn-icon">★</span>
                     <span class="btn-text">CREDITS</span>
+                </button>
+                <button class="menu-btn secondary" onclick="openRoomGuideModal()">
+                    <span class="btn-icon">📜</span>
+                    <span class="btn-text">ROOM EFFECTS GUIDE</span>
                 </button>
             </div>
             <div class="menu-footer">
@@ -128,6 +132,7 @@
                 <div id="game-message" class="game-message">Welcome to the Complex. Find Room 25 to escape!</div>
             </div>
             <div class="hud-right">
+                <button class="hud-btn highlight" id="hud-guide-btn" onclick="openRoomGuideModal()" title="Room Effects & Restrictions">📜 GUIDE</button>
                 <button class="hud-btn" onclick="showScreen('screen-rules')" title="Rules">📖</button>
                 <button class="hud-btn" onclick="toggleGameLog()" title="Game Log">📋</button>
                 <button class="hud-btn" onclick="confirmQuit()" title="Quit">✕</button>
@@ -254,6 +259,11 @@
                         <p class="room-info-placeholder">Hover over a room to see details</p>
                     </div>
                 </div>
+                <!-- Room Guide Quick Access -->
+                <button class="room-guide-quick-btn" onclick="openRoomGuideModal()">
+                    <span class="quick-btn-icon">📖</span>
+                    <span>ROOM EFFECTS & RESTRICTIONS</span>
+                </button>
             </div>
         </div>
 
@@ -421,6 +431,38 @@
                     <h3>DISCLAIMER</h3>
                     <p>This digital version is an unofficial fan project. Room 25 and Room 25 Ultimate are trademarks of Matagot. Please support the original creators by purchasing the physical board game!</p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== ROOM EFFECTS & RESTRICTIONS MODAL ==================== -->
+    <div id="modal-room-guide" class="modal hidden" onclick="if(event.target===this) closeRoomGuideModal()">
+        <div class="modal-content room-guide-modal-content">
+            <div class="room-guide-header">
+                <div class="room-guide-title-wrap">
+                    <span class="guide-header-icon">📖</span>
+                    <h2 class="room-guide-title">ROOM EFFECTS & RESTRICTIONS</h2>
+                </div>
+                <button class="room-guide-close-btn" onclick="closeRoomGuideModal()" title="Close">✕</button>
+            </div>
+
+            <!-- Category / Section Filter Tabs -->
+            <div class="room-guide-tabs">
+                <button class="rg-tab active" data-tab="rules" onclick="switchRoomGuideTab('rules')">📌 ACTION RULES</button>
+                <button class="rg-tab" data-tab="all" onclick="switchRoomGuideTab('all')">🌐 ALL ROOMS</button>
+                <button class="rg-tab" data-tab="safe" onclick="switchRoomGuideTab('safe')">🟢 SAFE</button>
+                <button class="rg-tab" data-tab="warning" onclick="switchRoomGuideTab('warning')">🟡 WARNING</button>
+                <button class="rg-tab" data-tab="danger" onclick="switchRoomGuideTab('danger')">🔴 DANGER</button>
+                <button class="rg-tab" data-tab="special" onclick="switchRoomGuideTab('special')">🏠🚪 SPECIAL</button>
+            </div>
+
+            <!-- Content Area (Scrollable) -->
+            <div id="room-guide-body" class="room-guide-body">
+                <!-- Injected dynamically by game.js -->
+            </div>
+
+            <div class="room-guide-footer">
+                <button class="menu-btn primary" onclick="closeRoomGuideModal()">CLOSE</button>
             </div>
         </div>
     </div>

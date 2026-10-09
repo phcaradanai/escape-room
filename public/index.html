@@ -32,7 +32,7 @@
                 <div class="logo-glow"></div>
                 <h1 class="game-title">
                     <span class="title-room" data-i18n="gameTitle">ROOM</span>
-                    <span class="title-25">25</span>
+                    <!--<span class="title-25">25</span>-->
                 </h1>
                 <h2 class="game-subtitle" data-i18n="gameSubtitle">ห้องมรณะ 25 ออนไลน์</h2>
                 <div class="title-tagline" data-i18n="tagline">เขาวงกตห้องมรณะ เรียลไทม์มัลติเพลเยอร์</div>
@@ -56,6 +56,10 @@
                     <button class="menu-btn" onclick="showScreen('screen-rules')">
                         <span class="btn-icon">📖</span>
                         <span class="btn-text" data-i18n="rules">คู่มือการเล่น</span>
+                    </button>
+                    <button class="menu-btn secondary" onclick="openRoomGuideModal()">
+                        <span class="btn-icon">📜</span>
+                        <span class="btn-text" data-i18n="roomGuideBtn">คู่มือห้อง & ข้อจำกัด</span>
                     </button>
                 </div>
             </div>
@@ -115,6 +119,38 @@
             </div>
         </div>
     </div>
+    <!-- ==================== ROOM EFFECTS & RESTRICTIONS MODAL ==================== -->
+    <div id="modal-room-guide" class="modal hidden" onclick="if(event.target===this) closeRoomGuideModal()">
+        <div class="modal-content room-guide-modal-content">
+            <div class="room-guide-header">
+                <div class="room-guide-title-wrap">
+                    <span class="guide-header-icon">📖</span>
+                    <h2 class="room-guide-title" data-i18n="roomGuideTitle">คู่มือเอฟเฟกต์ห้องและข้อจำกัดการเล่น</h2>
+                </div>
+                <button class="room-guide-close-btn" onclick="closeRoomGuideModal()" title="Close">✕</button>
+            </div>
+
+            <!-- Category / Section Filter Tabs -->
+            <div class="room-guide-tabs">
+                <button class="rg-tab active" data-tab="rules" onclick="switchRoomGuideTab('rules')" data-i18n="tabActionRules">📌 ข้อจำกัดแอ็กชัน</button>
+                <button class="rg-tab" data-tab="all" onclick="switchRoomGuideTab('all')" data-i18n="tabAllRooms">🌐 ทุกห้อง</button>
+                <button class="rg-tab" data-tab="safe" onclick="switchRoomGuideTab('safe')" data-i18n="tabSafeRooms">🟢 ปลอดภัย</button>
+                <button class="rg-tab" data-tab="warning" onclick="switchRoomGuideTab('warning')" data-i18n="tabWarningRooms">🟡 เตือนภัย</button>
+                <button class="rg-tab" data-tab="danger" onclick="switchRoomGuideTab('danger')" data-i18n="tabDangerRooms">🔴 อันตราย</button>
+                <button class="rg-tab" data-tab="special" onclick="switchRoomGuideTab('special')" data-i18n="tabSpecialRooms">🏠🚪 พิเศษ</button>
+            </div>
+
+            <!-- Content Area (Scrollable) -->
+            <div id="room-guide-body" class="room-guide-body">
+                <!-- Injected dynamically based on active tab and language -->
+            </div>
+
+            <div class="room-guide-footer">
+                <button class="menu-btn primary" onclick="closeRoomGuideModal()" data-i18n="closeGuide">เข้าใจแล้ว (ปิดหน้าต่าง)</button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- ==================== LOBBY WAITING ROOM ==================== -->
     <div id="screen-lobby" class="screen">
@@ -178,6 +214,7 @@
                     <button class="lang-btn hud-lang" data-lang="en" onclick="setLanguage('en')">EN</button>
                 </div>
                 <button class="hud-btn" onclick="toggleGameLog()" title="Log">📋</button>
+                <button class="hud-btn highlight" id="hud-guide-btn" onclick="openRoomGuideModal()" title="Room Effects & Restrictions">📜 <span class="hud-btn-label" data-i18n="roomGuideBtn">คู่มือห้อง</span></button>
                 <button class="hud-btn" onclick="showScreen('screen-rules')" title="Rules">📖</button>
             </div>
         </div>
@@ -212,19 +249,19 @@
                     </div>
 
                     <div class="action-buttons">
-                        <button class="action-btn" onclick="clientSelectAction('peek')">
+                        <button class="action-btn" id="btn-action-peek" onclick="clientSelectAction('peek')">
                             <span class="action-icon">👁</span>
                             <span class="action-name" data-i18n="lookAction">แอบดู</span>
                         </button>
-                        <button class="action-btn" onclick="clientSelectAction('move')">
+                        <button class="action-btn" id="btn-action-move" onclick="clientSelectAction('move')">
                             <span class="action-icon">🏃</span>
                             <span class="action-name" data-i18n="moveAction">เดิน</span>
                         </button>
-                        <button class="action-btn" onclick="clientSelectAction('push')">
+                        <button class="action-btn" id="btn-action-push" onclick="clientSelectAction('push')">
                             <span class="action-icon">👊</span>
                             <span class="action-name" data-i18n="pushAction">ผลัก</span>
                         </button>
-                        <button class="action-btn" onclick="clientSelectAction('control')">
+                        <button class="action-btn" id="btn-action-control" onclick="clientSelectAction('control')">
                             <span class="action-icon">⚙</span>
                             <span class="action-name" data-i18n="controlAction">เลื่อนห้อง</span>
                         </button>
@@ -292,6 +329,11 @@
                         <p class="room-info-placeholder" data-i18n="hoverIntel">เลื่อนเมาส์/แตะดูห้องที่เปิดแล้วเพื่ออ่านข้อมูล</p>
                     </div>
                 </div>
+                <!-- Room Guide Quick Access -->
+                <button class="room-guide-quick-btn" onclick="openRoomGuideModal()">
+                    <span class="quick-btn-icon">📖</span>
+                    <span data-i18n="viewRoomEffects">ดูเอฟเฟกต์ & ข้อจำกัดทุกห้อง</span>
+                </button>
             </div>
         </div>
 
