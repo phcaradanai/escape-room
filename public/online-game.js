@@ -198,16 +198,16 @@ const ROOM_TYPES_DATA = {
         freezer:     { name: 'Freezer Room',    icon: '🧊', category: 'warning', desc: 'Frozen chamber! Disables next planned action.' },
         dark:        { name: 'Dark Room',       icon: '🌑', category: 'warning', desc: 'Vision obscured. LOOK action is impossible from here.' },
         mortal:      { name: 'Mortal Chamber',  icon: '💀', category: 'danger',  desc: 'INSTANT DEATH TRAP! All who enter are incinerated.' },
-        trapped:     { name: 'Trapped Room',    icon: '⚠️', category: 'danger',  desc: 'Trapdoor activated! You must exit by your next turn or perish!' },
-        acid:        { name: 'Acid Bath',       icon: '☣️', category: 'danger',  desc: 'Lethal chemicals! If 2+ players stand here, one dissolves.' },
-        flooded:     { name: 'Flooded Room',    icon: '🌊', category: 'danger',  desc: 'Submerged! Remaining here 2 consecutive turns causes drowning.' },
-        twins:       { name: 'Twin Room',       icon: '👥', category: 'warning', desc: 'A disorienting mirrored corridor.' },
-        illusion:    { name: 'Illusion Room',   icon: '✨', category: 'warning', desc: 'Hallucinogenic gas chamber.' },
+        trapped:     { name: 'Trapped Room',    icon: '⚠️', category: 'danger',  desc: 'Trapdoor activated! Escape on next turn or die.' },
+        acid:        { name: 'Acid Bath',       icon: '☣️', category: 'danger',  desc: 'Lethal chemicals! If a second person enters, one is destroyed.' },
+        flooded:     { name: 'Flooded Room',    icon: '🌊', category: 'danger',  desc: 'Drown if you stay here at the end of the round.' },
+        twins:       { name: 'Twin Room',       icon: '👥', category: 'warning', desc: 'Transports you to the other Twin Room.' },
+        illusion:    { name: 'Illusion Room',   icon: '✨', category: 'warning', desc: 'Secretly shifts its position until revealed.' },
         hidden:      { name: 'Unexplored Room', icon: '❓', category: 'hidden',  desc: 'Room unknown. Use LOOK to safely inspect it.' }
     },
     th: {
         central:     { name: 'ห้องจุดเริ่มต้น (Central)', icon: '🏠', category: 'central', desc: 'ห้องเริ่มเกม ปลอดภัยสูงสุด ห้ามผลักกันในห้องนี้' },
-        room25:      { name: 'ห้อง 25 (ทางออก!)',          icon: '🚪', category: 'exit',    desc: 'ประตูสู่อิสรภาพ! พาทุกคนมารวมที่นี่ตรงริมขอบ แล้วใช้ Control เพื่อหนี!' },
+        room25:      { name: 'ห้อง 25 (ทางออก!)',          icon: '🚪', category: 'exit',    desc: 'ประตูสู่อิสรภาพ! เลื่อนห้องนี้ออกนอกศูนย์วิจัยเพื่อหนี' },
         empty:       { name: 'ห้องว่างเปล่า (Empty)',      icon: '⬜', category: 'safe',    desc: 'ปลอดภัย ไม่มีอันตรายหรือกับดักใดๆ' },
         vision:      { name: 'ห้องนิมิต (Vision)',         icon: '🔮', category: 'safe',    desc: 'แอบดูห้องที่ยังคว่ำอยู่ห้องไหนก็ได้ 1 ห้องทั่วกระดาน' },
         moving:      { name: 'ห้องเคลื่อนย้าย (Moving)',    icon: '🔄', category: 'safe',    desc: 'สลับตำแหน่งห้องนี้กับห้องที่ยังไม่เปิดห้องใดก็ได้' },
@@ -216,11 +216,11 @@ const ROOM_TYPES_DATA = {
         freezer:     { name: 'ห้องแช่แข็ง (Freezer)',      icon: '🧊', category: 'warning', desc: 'ตัวแข็งชา! จะสูญเสียแอ็กชันถัดไปทันที 1 ครั้ง' },
         dark:        { name: 'ห้องมืด (Dark Room)',       icon: '🌑', category: 'warning', desc: 'มืดสนิท ไม่สามารถใช้คำสั่งแอบดู (Look) จากห้องนี้ได้' },
         mortal:      { name: 'ห้องมรณะ (Mortal Chamber)', icon: '💀', category: 'danger',  desc: 'ตายทันที! กับดักสังหารใครที่ก้าวเข้ามาจะถูกกำจัด' },
-        trapped:     { name: 'ห้องประตูกล (Trapped)',      icon: '⚠️', category: 'danger',  desc: 'กับดักนับถอยหลัง! ต้องหนีออกไปในเทิร์นหน้า ไม่งั้นจะถูกกำจัด' },
-        acid:        { name: 'บ่อกรดมรณะ (Acid Bath)',     icon: '☣️', category: 'danger',  desc: 'กรดพิษ! หากมีผู้เล่นตั้งแต่ 2 คนขึ้นไปในห้องนี้ คนหนึ่งจะละลายตาย' },
-        flooded:     { name: 'ห้องน้ำท่วม (Flooded)',      icon: '🌊', category: 'danger',  desc: 'น้ำท่วมสูง หากจบเทิร์นในห้องนี้ติดต่อกัน 2 ครั้งจะจมน้ำตาย' },
-        twins:       { name: 'ห้องภาพลวงฝาแฝด (Twin)',    icon: '👥', category: 'warning', desc: 'ทางเดินกระจกเงาวกวน' },
-        illusion:    { name: 'ห้องภาพหลอน (Illusion)',    icon: '✨', category: 'warning', desc: 'แก๊สประสาทหลอน' },
+        trapped:     { name: 'ห้องประตูกล (Trapped)',      icon: '⚠️', category: 'danger',  desc: 'กับดักนับถอยหลัง! ต้องหนีในเทิร์นหน้า ไม่เช่นนั้นจะตาย' },
+        acid:        { name: 'บ่อกรดมรณะ (Acid Bath)',     icon: '☣️', category: 'danger',  desc: 'กรดพิษ! หากมีคนที่สองเข้ามา คนนั้นจะละลายหายไป' },
+        flooded:     { name: 'ห้องน้ำท่วม (Flooded)',      icon: '🌊', category: 'danger',  desc: 'ห้องน้ำท่วม หากยังอยู่ที่นี่เมื่อจบตาจะจมน้ำตาย' },
+        twins:       { name: 'ห้องภาพลวงฝาแฝด (Twin)',    icon: '👥', category: 'warning', desc: 'พาคุณไปโผล่ที่ห้องแฝดอีกห้องทันที' },
+        illusion:    { name: 'ห้องภาพหลอน (Illusion)',    icon: '✨', category: 'warning', desc: 'เปลี่ยนตำแหน่งไปเรื่อยๆ จนกว่าจะถูกเปิด' },
         hidden:      { name: 'ห้องปริศนา',                 icon: '❓', category: 'hidden',  desc: 'ยังไม่ได้สำรวจ ใช้คำสั่งแอบดูเพื่อเปิดเผยความลับ' }
     }
 };
@@ -664,6 +664,18 @@ function renderBoard(state) {
     const myId = getMyPlayerId(state);
     const isMyTurn = (state.phase === 'resolution' && state.currentPlayerIndex === myId);
     const waitingInput = state.waitingForInput;
+
+    // Check if client is trapped or frozen or flooded
+    const me = state.players.find(p => p.id === myId);
+
+    // Remove existing classes first
+    document.body.classList.remove('is-trapped', 'is-frozen', 'is-drowning');
+
+    if (me && me.alive) {
+        if (me.frozen) document.body.classList.add('is-frozen');
+        if (me.trapped) document.body.classList.add('is-trapped');
+        if (state.board[me.row][me.col].type === 'flooded') document.body.classList.add('is-drowning');
+    }
 
     for (let r = 0; r < 5; r++) {
         for (let c = 0; c < 5; c++) {

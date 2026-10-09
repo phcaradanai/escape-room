@@ -292,6 +292,44 @@ function advanceToNextAction(room) {
     g.waitingForInput = null;
     g.pushTargetId = null;
 
+    // Clear trapped if they moved out
+    g.players.forEach(p => {
+        if (p.alive && p.trapped) {
+            const currentRoom = g.board[p.row][p.col];
+            if (currentRoom.type !== 'trapped') {
+                p.trapped = false;
+                addRoomLog(room, `✓ ${p.name} escaped the Trapped Room!`, 'success');
+            }
+        }
+    });
+
+    // Check Trapped execution before advancing to next player's action sequence
+    const currentPlayer = g.players[g.currentPlayerIndex];
+    if (currentPlayer && currentPlayer.alive && currentPlayer.trapped) {
+        let mustDie = false;
+        if (currentPlayer.trappedRound !== undefined && currentPlayer.trappedActionIndex !== undefined) {
+            const isNextAction = (g.currentRound > currentPlayer.trappedRound) ||
+                                 (g.currentRound === currentPlayer.trappedRound && g.currentActionIndex > currentPlayer.trappedActionIndex);
+
+            if (isNextAction) {
+                // Determine if this is the end of the action *after* they were trapped
+                const actionPassed = (g.currentRound - currentPlayer.trappedRound) * 2 + (g.currentActionIndex - currentPlayer.trappedActionIndex);
+                if (actionPassed >= 1) {
+                    mustDie = true;
+                }
+            }
+        }
+
+        if (mustDie) {
+            currentPlayer.alive = false;
+            currentPlayer.trapped = false;
+            addRoomLog(room, `☠ ${currentPlayer.name} failed to escape the Trapped Room and was executed!`, 'danger');
+            checkDeathWinLoss(room);
+        }
+    }
+
+    if (g.gameOver) return;
+
     // Find next alive player for the current action index
     let nextPlayerIdx = g.currentPlayerIndex + 1;
     while (nextPlayerIdx < g.players.length && !g.players[nextPlayerIdx].alive) {
@@ -399,7 +437,8 @@ function triggerRoomEffect(room, player, targetRoom, isPushed = false) {
 
         case 'trapped':
             player.trapped = true;
-            player.trappedTurns = 0;
+            player.trappedRound = g.currentRound;
+            player.trappedActionIndex = g.currentActionIndex;
             addRoomLog(room, `⚠️ ${player.name} entered a TRAPPED ROOM! Escape on next turn or be executed!`, 'danger');
             advanceToNextAction(room);
             break;
@@ -469,18 +508,57 @@ function triggerRoomEffect(room, player, targetRoom, isPushed = false) {
             break;
 
         case 'illusion':
-            addRoomLog(room, `✨ ${player.name} entered Illusion Room! Hallucinogenic gas disorients the prisoner.`, 'warning');
+            addRoomLog(room, `✨ ${player.name} entered Illusion Room! The room has already shifted around you!`, 'warning');
             advanceToNextAction(room);
             break;
 
         case 'twins':
-            addRoomLog(room, `👥 ${player.name} entered Twin Room! Mirrored reflections echo every step.`, 'warning');
+            let otherTwin = null;
+            for (let r = 0; r < 5; r++) {
+                for (let c = 0; c < 5; c++) {
+                    const cell = g.board[r][c];
+                    if (cell.type === 'twins' && (cell.row !== targetRoom.row || cell.col !== targetRoom.col)) {
+                        otherTwin = cell;
+                    }
+                }
+            }
+            if (otherTwin) {
+                player.row = otherTwin.row;
+                player.col = otherTwin.col;
+                otherTwin.revealed = true;
+                addRoomLog(room, `👥 ${player.name} entered Twin Room and was transported to the other Twin Room!`, 'warning');
+            } else {
+                addRoomLog(room, `👥 ${player.name} entered Twin Room, but the other twin is not found!`, 'warning');
+            }
             advanceToNextAction(room);
             break;
 
         default:
             advanceToNextAction(room);
             break;
+    }
+}
+
+function shiftIllusionRoom(room) {
+    const g = room.game;
+    let illusionPos = null;
+    let hiddenRooms = [];
+
+    for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+            if (g.board[r][c].type === 'illusion' && !g.board[r][c].revealed) {
+                illusionPos = { r, c };
+            } else if (!g.board[r][c].revealed && g.board[r][c].type !== 'central' && g.board[r][c].type !== 'room25') {
+                hiddenRooms.push({ r, c });
+            }
+        }
+    }
+
+    if (illusionPos && hiddenRooms.length > 0) {
+        const target = hiddenRooms[Math.floor(Math.random() * hiddenRooms.length)];
+        const tempType = g.board[illusionPos.r][illusionPos.c].type;
+        g.board[illusionPos.r][illusionPos.c].type = g.board[target.r][target.c].type;
+        g.board[target.r][target.c].type = tempType;
     }
 }
 
@@ -819,7 +897,10 @@ io.on('connection', (socket) => {
 
             addRoomLog(room, `${player.name} moved to (${row + 1}, ${col + 1}): ${roomCell.type.toUpperCase()}`, 'info');
             broadcastGameState(room);
-            setTimeout(() => triggerRoomEffect(room, player, roomCell), 800);
+            setTimeout(() => {
+                shiftIllusionRoom(room);
+                triggerRoomEffect(room, player, roomCell);
+            }, 800);
         } else if (data.type === 'pushSelectTarget') {
             const target = g.players.find(p => p.id === data.targetId);
             if (!target || target.row !== player.row || target.col !== player.col) return;
@@ -846,7 +927,10 @@ io.on('connection', (socket) => {
 
             addRoomLog(room, `${player.name} PUSHED ${target.name} into (${row + 1}, ${col + 1})!`, 'warning');
             broadcastGameState(room);
-            setTimeout(() => triggerRoomEffect(room, target, roomCell, true), 800);
+            setTimeout(() => {
+                shiftIllusionRoom(room);
+                triggerRoomEffect(room, target, roomCell, true);
+            }, 800);
         } else if (data.type === 'slide') {
             const { slideType, index, direction } = data;
             if ((slideType === 'row' || slideType === 'col') && index === 2) {

@@ -2179,3 +2179,60 @@ body {
         height: min(85vw, 360px);
     }
 }
+
+/* Premium Glassmorphism Overrides */
+.game-panel-left, .game-panel-right, .game-hud-top, .modal-content, .lobby-box {
+    background: rgba(18, 18, 26, 0.6) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.room-tile {
+    border-radius: 8px !important;
+    background: rgba(26, 26, 46, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.room-tile:hover {
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4) !important;
+    transform: translateY(-6px) scale(1.05) !important;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-blue), #0099ff) !important;
+    box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4) !important;
+    border: none !important;
+    border-radius: 6px !important;
+    transition: transform 0.2s, box-shadow 0.2s !important;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(0, 212, 255, 0.6) !important;
+}
+
+/* Screen Effects for Body Classes */
+body.is-frozen .scanline-overlay {
+    background: rgba(0, 212, 255, 0.1);
+    box-shadow: inset 0 0 100px rgba(0, 212, 255, 0.3);
+}
+
+body.is-trapped .scanline-overlay {
+    background: rgba(239, 68, 68, 0.05);
+    box-shadow: inset 0 0 100px rgba(239, 68, 68, 0.2);
+    animation: alarmPulse 2s infinite ease-out;
+}
+
+body.is-drowning .scanline-overlay {
+    background: rgba(56, 189, 248, 0.1);
+    box-shadow: inset 0 0 100px rgba(56, 189, 248, 0.3);
+    animation: floatEffect 3s infinite ease-in-out;
+}
+
+@keyframes floatEffect {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(10px); }
+}
